@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package>
+  <name>aqua_robot_messages</name>
+  <version>0.0.1</version>
+  <description>水中ロボット内（Arduino-Raspberry Pi間）通信で使用するメッセージ集</description>
+
+  <maintainer email="fujimoto@aisl.cs.tut.ac.jp">Hironori Fujimoto</maintainer>
+  <license>TODO</license>
+  <author email="fujimoto@aisl.cs.tut.ac.jp">Hironori Fujimoto</author> -->
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>message_generation</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <run_depend>message_runtime</run_depend>
+  <run_depend>std_msgs</run_depend>
+
+  <export>
+  </export>
+</package>
