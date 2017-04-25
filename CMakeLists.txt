@@ -4,6 +4,7 @@ project(aqua_robot_messages)
 find_package(catkin REQUIRED COMPONENTS
   message_generation
   std_msgs
+  geometry_msgs
 )
 
 ################################################
@@ -13,11 +14,13 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   MotorVelocity.msg
+  State.msg
 )
 
 generate_messages(
   DEPENDENCIES
   std_msgs
+  geometry_msgs
 )
 
 ###################################
@@ -25,7 +28,10 @@ generate_messages(
 ###################################
 
 catkin_package(
-  CATKIN_DEPENDS message_runtime std_msgs
+  CATKIN_DEPENDS 
+  message_runtime 
+  std_msgs
+  geometry_msgs
 )
 
 ###########
