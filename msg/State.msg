@@ -1,8 +1,6 @@
 # [V]
 float32 battery
 
-aqua_robot_messages/MotorVelocity motor
-
 # [G]
 geometry_msgs/Vector3 accel
 
