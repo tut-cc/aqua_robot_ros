@@ -1,7 +1,16 @@
-# 水中ロボット Arduinoスケッチ
+# AquaRobotArduino
 
-電子回路班の水中ロボット内部のArduino用スケッチです
+電子回路班：水中ロボット内蔵Arduino用 ROSノードスケッチ
 
-各種センサからデータを収集し、シリアル経由でRaspberry Piへ送信します
+## Publish Topic
 
-また、Raspberry Pi側から送られてきた指令値に基づいてモーターを回転させます
+state: MPU6050から取得したデータとバッテリ電圧
+
+## Subscribe Topic
+
+set\_motor\_velocity: 各モーターの回転数を指定
+
+## TODO
+
+- バッテリ電圧の取得テスト
+- モーター回転のテスト
