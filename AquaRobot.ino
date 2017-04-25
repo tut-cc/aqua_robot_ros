@@ -1,154 +1,97 @@
+/*
+ * 電子回路班 水中ロボット用 ROSノードスケッチ
+ * TODO: モーター名を番号ではなく、位置がわかるようなものにする
+ */
+
+#include <ros.h>
+#include <aqua_robot_messages/MotorVelocity.h>
+#include <aqua_robot_messages/State.h>
+
 #include "Wire.h"
-#include "I2Cdev.h"
-#include "MPU6050.h"
+#include "MPU6050_6Axis_MotionApps20.h"
 
-#define BatteryPin 0
+void setMotorVelocity(const aqua_robot_messages::MotorVelocity& motor_velocity);
 
-//通信用オブジェクト
-MPU6050 accelgyro;
+const unsigned int MOTOR_PINS[4] = {3, 5, 6, 9};
+const unsigned int BATTERY_PIN = 0;
 
-//送信Data
-int16_t ax, ay, az;
-int16_t gx, gy, gz;
+aqua_robot_messages::State stateMsg;
 
-//バッテリー残量
-double val;
+// デフォルトのノード設定だとメモリを食い過ぎて死ぬので、制限をかけておく
+// ros::NodeHandle nodeHandle;
+ros::NodeHandle_<ArduinoHardware, 1, 1, 80, 250> nodeHandle; 
+ros::Subscriber<aqua_robot_messages::MotorVelocity> motorSubscriber("set_motor_velocity", &setMotorVelocity);
+ros::Publisher statePublisher("status", &stateMsg);
 
-//温度
-double temp;
-
-//モーター使用ピン
-int8_t mPin[]={3,5,6,9};
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//データ送信関数
-void sendData(){
-  accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
-  temp=(accelgyro.getTemperature()+12412.0)/340.0;
-  //offset 340[LSB/℃]*35[℃]+521[LSB]=12412[LSB]
-
-  //センサー受信エラー
-  if(ax==0&&ay==0&&az==0){
-    Serial.println("{\"Error\": \"Sensor error\"}");
-    accelgyro.initialize();
-    
-    Serial.println("{\"Setting\": \"Restart\"}");
-    if(accelgyro.testConnection()){
-      Serial.println("{\"Setting\": \"MPU6050 connection successful\"}");
-      accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
-      temp=(accelgyro.getTemperature()+12412.0)/340.0;
-    }
-    else{
-      Serial.println("{\"Error\": \"MPU6050 connection failed\"}");
-      return;
-    }
-  }
-  
-  //加速度は[G]単位=9.8[m/s^2]
-  //オフセット ax:±50mG, ay:±50mG, az:±80mG
-  Serial.print("{");
-  Serial.print("\"ax\": ");   Serial.print(ax/16384.0);
-  Serial.print(",\t\"ay\": ");Serial.print(ay/16384.0);
-  Serial.print(",\t\"az\": ");Serial.print(az/16384.0);
-
-  //ジャイロは[°/s]単位
-  //オフセット ±20[°/s]
-  Serial.print(",\t\"gx\": ");   Serial.print(gx/131.0);
-  Serial.print(",\t\"gy\": ");Serial.print(gy/131.0);
-  Serial.print(",\t\"gz\": ");Serial.print(gz/131.0);
-
-  Serial.print(",\t\"temp\": ");
-  Serial.print(temp);
-  Serial.println("}");
-}
-
-
-//モータ制御関数
-void MotorControl(String Data){
-  Data.replace("Motor:","");
-  int i=Data.toInt()-1;
-  
-  //受信エラー
-  if(i<0){
-    Serial.println("{\"Error\": \"Receive error\", \"State\": \"Motor\"}");
-  }
-
-  //受信成功時
-  else if(i<sizeof(mPin)){
-    //不要な情報を消去
-    int sp=Data.indexOf(" ");
-    Data=Data.substring(sp+1);
-    Data.replace("Speed:","");
-    sp=Data.toInt();
-    
-    analogWrite(mPin[i],sp);
-
-    Serial.print("{\"MotorPin\": ");
-    Serial.print(mPin[i]);
-    Serial.print(", \"Speed\": ");
-    Serial.print(sp);
-    Serial.println("}");
-  }
-
-  //配列外参照
-  else{
-    Serial.println("{\"Error\": \"Out of index\"}");
-  }
-}
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
+MPU6050 mpu;
+uint16_t mpuPacketSize;
 
 void setup() {
+  nodeHandle.initNode();
+  nodeHandle.advertise(statePublisher);
+  
   Wire.begin();
-  Serial.begin(9600);
 
-  //モーター出力設定
-  for(int i=0 ; i < sizeof(mPin) ; i++){
-    pinMode(mPin[i], OUTPUT);
-  }
-
-  //センサー接続待機中
-  Serial.println("{\"Setting\": \"Initializing I2C devices...\"}");
-  accelgyro.initialize();
-
-  //センサー接続テスト
-  Serial.println("{\"Setting\": \"Testing device connections...\"}");
-  Serial.println(accelgyro.testConnection() ? "{\"Setting\": \"MPU6050 connection successful\"}" : "{\"Error\": \"MPU6050 connection failed\"}");
+  for(int i = 0; i < sizeof(MOTOR_PINS) / sizeof(unsigned int); i++)
+    pinMode(MOTOR_PINS[i], OUTPUT);
+  
+  // MPUの初期化
+  mpu.initialize();
+  mpu.dmpInitialize();
+  
+  // これらのオフセット値はサンプルからそのままコピーしてきたもの
+  // 有効・正確であるかは未検証
+  mpu.setXGyroOffset(270);
+  mpu.setYGyroOffset(76);
+  mpu.setZGyroOffset(-85);
+  mpu.setZAccelOffset(1788);
+  
+  mpu.setDMPEnabled(true);
+  
+  mpuPacketSize = mpu.dmpGetFIFOPacketSize();
 }
 
+void loop() {
+  stateMsg.battery = analogRead(BATTERY_PIN) / 1023.0 * 5.0;
+  
+  // MPUのFIFOにデータが貯まるまで待機
+  mpu.resetFIFO();
+  for(uint16_t fifoCount = mpu.getFIFOCount(); fifoCount < mpuPacketSize; fifoCount = mpu.getFIFOCount()){
+  }
+  uint8_t fifoBuffer[64];
+  mpu.getFIFOBytes(fifoBuffer, mpuPacketSize);
+  
+  Quaternion quaternion;
+  VectorFloat gravity;
+  float yawPitchRoll[3];
+  mpu.dmpGetQuaternion(&quaternion, fifoBuffer);
+  mpu.dmpGetGravity(&gravity, &quaternion);
+  mpu.dmpGetYawPitchRoll(yawPitchRoll, &quaternion, &gravity);
+  stateMsg.yaw = yawPitchRoll[0] * 180 / M_PI;
+  stateMsg.pitch = yawPitchRoll[1] * 180 / M_PI;
+  stateMsg.roll = yawPitchRoll[2] * 180 / M_PI;
+  
+  VectorInt16 accelWithGravity;
+  VectorInt16 accel;
+  mpu.dmpGetAccel(&accelWithGravity, fifoBuffer);
+  mpu.dmpGetLinearAccel(&accel, &accelWithGravity, &gravity);
+  stateMsg.accel.x = accel.x / 8192.0;
+  stateMsg.accel.y = accel.y / 8192.0;
+  stateMsg.accel.z = accel.z / 8192.0;
+  
+  VectorInt16 angularVelocity;
+  mpu.dmpGetGyro(&angularVelocity, fifoBuffer);
+  stateMsg.angular_velocity.x = angularVelocity.x / 16.4;
+  stateMsg.angular_velocity.y = angularVelocity.y / 16.4;
+  stateMsg.angular_velocity.z = angularVelocity.z / 16.4;
+  
+  statePublisher.publish(&stateMsg);
+  nodeHandle.spinOnce();
+}
 
-void loop() {    
-  if(Serial.available()>0){
-    char buffer[50]={};
-    
-    if(Serial.readBytesUntil("\n",buffer,50)>0){
-      String Data = String(buffer);
-
-      //モーター制御
-      if (Data.startsWith("Motor:")){
-        MotorControl(Data);
-      }
-
-      //センサーのデータを送信
-      else if(Data.startsWith("Sensor")){
-        sendData();
-      }
-
-      //バッテリー残量
-      else if(Data.startsWith("Battery")){
-        val=analogRead(BatteryPin)/1024.0*5.0;
-        Serial.print("{\"Battery\": ");
-        Serial.print(val);
-        Serial.println("}");
-      }
-
-      //よくわからないデータを受信した時
-      else{
-        Serial.println("{\"Error\": \"Receive error\", \"State\": \"General\"}");
-      }
-    }
-  }    
+void setMotorVelocity(const aqua_robot_messages::MotorVelocity& motor_velocity) {
+  analogWrite(MOTOR_PINS[0], motor_velocity.motor1);
+  analogWrite(MOTOR_PINS[1], motor_velocity.motor2);
+  analogWrite(MOTOR_PINS[2], motor_velocity.motor3);
+  analogWrite(MOTOR_PINS[3], motor_velocity.motor4);
 }
