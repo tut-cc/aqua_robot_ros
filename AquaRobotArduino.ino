@@ -29,11 +29,14 @@ uint16_t mpuPacketSize;
 void setup() {
   nodeHandle.initNode();
   nodeHandle.advertise(statePublisher);
+  nodeHandle.subscribe(motorSubscriber);
   
   Wire.begin();
 
-  for(int i = 0; i < sizeof(MOTOR_PINS) / sizeof(unsigned int); i++)
+  for(int i = 0; i < sizeof(MOTOR_PINS) / sizeof(unsigned int); i++) {
     pinMode(MOTOR_PINS[i], OUTPUT);
+    analogWrite(MOTOR_PINS[i], 0);
+  }
   
   // MPUの初期化
   mpu.initialize();
