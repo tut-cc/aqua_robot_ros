@@ -8,12 +8,16 @@
 #include <aqua_robot_messages/State.h>
 
 #include "Wire.h"
+#include "Servo.h"
 #include "MPU6050_6Axis_MotionApps20.h"
 
 void setMotorVelocity(const aqua_robot_messages::MotorVelocity& motor_velocity);
 
 const unsigned int MOTOR_PINS[4] = {3, 5, 6, 9};
 const unsigned int BATTERY_PIN = 0;
+const unsigned int BATTERY_CHECK_PIN = 2;
+
+Servo esc[4];
 
 aqua_robot_messages::State stateMsg;
 
@@ -32,10 +36,21 @@ void setup() {
   nodeHandle.subscribe(motorSubscriber);
   
   Wire.begin();
-
+  
+  // ESCの初期化 ESCへの入力が0の場合、モータは動かずにブザーが鳴る
   for(int i = 0; i < sizeof(MOTOR_PINS) / sizeof(unsigned int); i++) {
     pinMode(MOTOR_PINS[i], OUTPUT);
-    analogWrite(MOTOR_PINS[i], 0);
+    esc[i].attach(MOTOR_PINS[i]);
+    esc[i].writeMicroseconds(0);
+  }
+  
+  // バッテリがオンになるまで待機？
+  pinMode(BATTERY_CHECK_PIN, INPUT);
+  while(digitalRead(BATTERY_CHECK_PIN) == 0);
+
+  // ESCが1000以下の場合、モータは停止したまま
+  for(int i = 0; i < sizeof(MOTOR_PINS) / sizeof(unsigned int); i++) {
+    esc[i].writeMicroseconds(1000);
   }
   
   // MPUの初期化
@@ -93,8 +108,9 @@ void loop() {
 }
 
 void setMotorVelocity(const aqua_robot_messages::MotorVelocity& motor_velocity) {
-  analogWrite(MOTOR_PINS[0], motor_velocity.motor1);
-  analogWrite(MOTOR_PINS[1], motor_velocity.motor2);
-  analogWrite(MOTOR_PINS[2], motor_velocity.motor3);
-  analogWrite(MOTOR_PINS[3], motor_velocity.motor4);
+  // writeMicroseconds(2000)がESCの最大出力
+  esc[0].writeMicroseconds(1000 + (motor_velocity.motor1 * 1000 / 255));
+  esc[1].writeMicroseconds(1000 + (motor_velocity.motor2 * 1000 / 255));
+  esc[2].writeMicroseconds(1000 + (motor_velocity.motor3 * 1000 / 255));
+  esc[3].writeMicroseconds(1000 + (motor_velocity.motor4 * 1000 / 255));
 }
