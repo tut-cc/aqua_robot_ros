@@ -13,6 +13,7 @@
 
 void setMotorVelocity(const aqua_robot_messages::MotorVelocity& motor_velocity);
 void setESCMinMax();
+void getMPUData();
 
 const unsigned int ESC_PIN_VERTICAL_RIGHT = 9;
 const unsigned int ESC_PIN_VERTICAL_LEFT = 5;
@@ -79,37 +80,7 @@ void setup() {
 
 void loop() {
   stateMsg.battery = analogRead(BATTERY_PIN) / 1023.0 * 5.0;
-  
-  // MPUのFIFOにデータが貯まるまで待機
-  mpu.resetFIFO();
-  for(uint16_t fifoCount = mpu.getFIFOCount(); fifoCount < mpuPacketSize; fifoCount = mpu.getFIFOCount()){
-  }
-  uint8_t fifoBuffer[64];
-  mpu.getFIFOBytes(fifoBuffer, mpuPacketSize);
-  
-  Quaternion quaternion;
-  VectorFloat gravity;
-  float yawPitchRoll[3];
-  mpu.dmpGetQuaternion(&quaternion, fifoBuffer);
-  mpu.dmpGetGravity(&gravity, &quaternion);
-  mpu.dmpGetYawPitchRoll(yawPitchRoll, &quaternion, &gravity);
-  stateMsg.yaw = yawPitchRoll[0] * 180 / M_PI;
-  stateMsg.pitch = yawPitchRoll[1] * 180 / M_PI;
-  stateMsg.roll = yawPitchRoll[2] * 180 / M_PI;
-  
-  VectorInt16 accelWithGravity;
-  VectorInt16 accel;
-  mpu.dmpGetAccel(&accelWithGravity, fifoBuffer);
-  mpu.dmpGetLinearAccel(&accel, &accelWithGravity, &gravity);
-  stateMsg.accel.x = accel.x / 8192.0;
-  stateMsg.accel.y = accel.y / 8192.0;
-  stateMsg.accel.z = accel.z / 8192.0;
-  
-  VectorInt16 angularVelocity;
-  mpu.dmpGetGyro(&angularVelocity, fifoBuffer);
-  stateMsg.angular_velocity.x = angularVelocity.x / 16.4;
-  stateMsg.angular_velocity.y = angularVelocity.y / 16.4;
-  stateMsg.angular_velocity.z = angularVelocity.z / 16.4;
+  getMPUData();
   
   statePublisher.publish(&stateMsg);
   nodeHandle.spinOnce();
@@ -144,4 +115,38 @@ void setMotorVelocity(const aqua_robot_messages::MotorVelocity& motor_velocity) 
   esc[ESC_SERVO_INDEX_VERTICAL_LEFT].writeMicroseconds(ESC_INPUT_MIN + (motor_velocity.motor_vertical_left * (ESC_INPUT_MAX - ESC_INPUT_MIN) / 255));
   esc[ESC_SERVO_INDEX_HORIZONTAL_RIGHT].writeMicroseconds(ESC_INPUT_MIN + (motor_velocity.motor_horizontal_right * (ESC_INPUT_MAX - ESC_INPUT_MIN) / 255));
   esc[ESC_SERVO_INDEX_HORIZONTAL_LEFT].writeMicroseconds(ESC_INPUT_MIN + (motor_velocity.motor_horizontal_left * (ESC_INPUT_MAX - ESC_INPUT_MIN) / 255));
+}
+
+// MPU6050より各種データを取得、publish用messageにセットする
+void getMPUData() {
+  // MPUのFIFOにデータが貯まるまで待機
+  mpu.resetFIFO();
+  for(uint16_t fifoCount = mpu.getFIFOCount(); fifoCount < mpuPacketSize; fifoCount = mpu.getFIFOCount()){
+  }
+  uint8_t fifoBuffer[64];
+  mpu.getFIFOBytes(fifoBuffer, mpuPacketSize);
+  
+  Quaternion quaternion;
+  VectorFloat gravity;
+  float yawPitchRoll[3];
+  mpu.dmpGetQuaternion(&quaternion, fifoBuffer);
+  mpu.dmpGetGravity(&gravity, &quaternion);
+  mpu.dmpGetYawPitchRoll(yawPitchRoll, &quaternion, &gravity);
+  stateMsg.yaw = yawPitchRoll[0] * 180 / M_PI;
+  stateMsg.pitch = yawPitchRoll[1] * 180 / M_PI;
+  stateMsg.roll = yawPitchRoll[2] * 180 / M_PI;
+  
+  VectorInt16 accelWithGravity;
+  VectorInt16 accel;
+  mpu.dmpGetAccel(&accelWithGravity, fifoBuffer);
+  mpu.dmpGetLinearAccel(&accel, &accelWithGravity, &gravity);
+  stateMsg.accel.x = accel.x / 8192.0;
+  stateMsg.accel.y = accel.y / 8192.0;
+  stateMsg.accel.z = accel.z / 8192.0;
+  
+  VectorInt16 angularVelocity;
+  mpu.dmpGetGyro(&angularVelocity, fifoBuffer);
+  stateMsg.angular_velocity.x = angularVelocity.x / 16.4;
+  stateMsg.angular_velocity.y = angularVelocity.y / 16.4;
+  stateMsg.angular_velocity.z = angularVelocity.z / 16.4;
 }
