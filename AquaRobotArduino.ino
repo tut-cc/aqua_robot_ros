@@ -20,6 +20,9 @@ const unsigned int ESC_PIN_HORIZONTAL_RIGHT = 6;
 const unsigned int ESC_PIN_HORIZONTAL_LEFT = 3;
 const unsigned int ESC_PINS[4] = {ESC_PIN_VERTICAL_RIGHT, ESC_PIN_VERTICAL_LEFT, ESC_PIN_HORIZONTAL_RIGHT, ESC_PIN_HORIZONTAL_LEFT};
 
+const unsigned int ESC_INPUT_MAX = 2000;
+const unsigned int ESC_INPUT_MIN = 1000;
+
 const unsigned int BATTERY_PIN = 0;
 const unsigned int BATTERY_CHECK_PIN = 2;
 
@@ -117,7 +120,7 @@ void setESCMinMax()
 {
   // ESCの電源を切った状態で、最大出力時のパルス波形を入力
   for(int i = 0; i < sizeof(ESC_PINS) / sizeof(unsigned int); i++){
-    esc[i].writeMicroseconds(2000);
+    esc[i].writeMicroseconds(ESC_INPUT_MAX);
   }
   
   // ESCの電源が入るまで待機
@@ -129,7 +132,7 @@ void setESCMinMax()
   // 最小出力（モータは無回転）に対応するパルス波形を入力 これ以下のパルス波系はすべて無回転として扱われる
   // また、0を入力するとブザー音が鳴る
   for(int i = 0; i < sizeof(ESC_PINS) / sizeof(unsigned int); i++){
-    esc[i].writeMicroseconds(1000);
+    esc[i].writeMicroseconds(ESC_INPUT_MIN);
   }
   
   delay(3000);
@@ -137,8 +140,8 @@ void setESCMinMax()
 
 void setMotorVelocity(const aqua_robot_messages::MotorVelocity& motor_velocity) {
   // writeMicroseconds(2000)がESCの最大出力
-  esc[ESC_SERVO_INDEX_VERTICAL_RIGHT].writeMicroseconds(1000 + (motor_velocity.motor_vertical_right * 1000 / 255));
-  esc[ESC_SERVO_INDEX_VERTICAL_LEFT].writeMicroseconds(1000 + (motor_velocity.motor_vertical_left * 1000 / 255));
-  esc[ESC_SERVO_INDEX_HORIZONTAL_RIGHT].writeMicroseconds(1000 + (motor_velocity.motor_horizontal_right * 1000 / 255));
-  esc[ESC_SERVO_INDEX_HORIZONTAL_LEFT].writeMicroseconds(1000 + (motor_velocity.motor_horizontal_left * 1000 / 255));
+  esc[ESC_SERVO_INDEX_VERTICAL_RIGHT].writeMicroseconds(ESC_INPUT_MIN + (motor_velocity.motor_vertical_right * (ESC_INPUT_MAX - ESC_INPUT_MIN) / 255));
+  esc[ESC_SERVO_INDEX_VERTICAL_LEFT].writeMicroseconds(ESC_INPUT_MIN + (motor_velocity.motor_vertical_left * (ESC_INPUT_MAX - ESC_INPUT_MIN) / 255));
+  esc[ESC_SERVO_INDEX_HORIZONTAL_RIGHT].writeMicroseconds(ESC_INPUT_MIN + (motor_velocity.motor_horizontal_right * (ESC_INPUT_MAX - ESC_INPUT_MIN) / 255));
+  esc[ESC_SERVO_INDEX_HORIZONTAL_LEFT].writeMicroseconds(ESC_INPUT_MIN + (motor_velocity.motor_horizontal_left * (ESC_INPUT_MAX - ESC_INPUT_MIN) / 255));
 }
