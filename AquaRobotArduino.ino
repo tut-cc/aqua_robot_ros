@@ -13,7 +13,12 @@
 
 void setMotorVelocity(const aqua_robot_messages::MotorVelocity& motor_velocity);
 
-const unsigned int MOTOR_PINS[4] = {3, 5, 6, 9};
+const unsigned int ESC_PIN_VERTICAL_RIGHT = 9;
+const unsigned int ESC_PIN_VERTICAL_LEFT = 5;
+const unsigned int ESC_PIN_HORIZONTAL_RIGHT = 6;
+const unsigned int ESC_PIN_HORIZONTAL_LEFT = 3;
+const unsigned int ESC_PINS[4] = {ESC_PIN_VERTICAL_RIGHT, ESC_PIN_VERTICAL_LEFT, ESC_PIN_HORIZONTAL_RIGHT, ESC_PIN_HORIZONTAL_LEFT};
+
 const unsigned int BATTERY_PIN = 0;
 const unsigned int BATTERY_CHECK_PIN = 2;
 
@@ -38,9 +43,9 @@ void setup() {
   Wire.begin();
   
   // ESCの初期化 ESCへの入力が0の場合、モータは動かずにブザーが鳴る
-  for(int i = 0; i < sizeof(MOTOR_PINS) / sizeof(unsigned int); i++) {
-    pinMode(MOTOR_PINS[i], OUTPUT);
-    esc[i].attach(MOTOR_PINS[i]);
+  for(int i = 0; i < sizeof(ESC_PINS) / sizeof(unsigned int); i++) {
+    pinMode(ESC_PINS[i], OUTPUT);
+    esc[i].attach(ESC_PINS[i]);
     esc[i].writeMicroseconds(0);
   }
   
@@ -49,7 +54,7 @@ void setup() {
   while(digitalRead(BATTERY_CHECK_PIN) == 0);
 
   // ESCが1000以下の場合、モータは停止したまま
-  for(int i = 0; i < sizeof(MOTOR_PINS) / sizeof(unsigned int); i++) {
+  for(int i = 0; i < sizeof(ESC_PINS) / sizeof(unsigned int); i++) {
     esc[i].writeMicroseconds(1000);
   }
   
