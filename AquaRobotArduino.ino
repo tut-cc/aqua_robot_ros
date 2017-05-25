@@ -12,6 +12,7 @@
 #include "MPU6050_6Axis_MotionApps20.h"
 
 void setMotorVelocity(const aqua_robot_messages::MotorVelocity& motor_velocity);
+void setupESC();
 
 const unsigned int ESC_PIN_VERTICAL_RIGHT = 9;
 const unsigned int ESC_PIN_VERTICAL_LEFT = 5;
@@ -46,6 +47,8 @@ void setup() {
   nodeHandle.subscribe(motorSubscriber);
   
   Wire.begin();
+  
+  // setupESC(); // ESCの設定が必要ならコメント解除
   
   // ESCの初期化 ESCへの入力が0の場合、モータは動かずにブザーが鳴る
   for(int i = 0; i < sizeof(ESC_PINS) / sizeof(unsigned int); i++) {
@@ -115,6 +118,29 @@ void loop() {
   
   statePublisher.publish(&stateMsg);
   nodeHandle.spinOnce();
+}
+
+// ESCの最大出力・最小出力に対応する入力パルス波形を設定する関数
+void setupESC()
+{
+  // ESCの電源を切った状態で、最大出力時のパルス波形を入力
+  for(int i = 0; i < sizeof(ESC_PINS) / sizeof(unsigned int); i++){
+    esc[i].writeMicroseconds(2000);
+  }
+  
+  // ESCの電源が入るまで待機
+  pinMode(BATTERY_CHECK_PIN,INPUT);
+  while(digitalRead(BATTERY_CHECK_PIN) == 0);
+  
+  delay(2000);
+  
+  // 最小出力（モータは無回転）に対応するパルス波形を入力 これ以下のパルス波系はすべて無回転として扱われる
+  // また、0を入力するとブザー音が鳴る
+  for(int i = 0; i < sizeof(ESC_PINS) / sizeof(unsigned int); i++){
+    esc[i].writeMicroseconds(1000);
+  }
+  
+  delay(3000);
 }
 
 void setMotorVelocity(const aqua_robot_messages::MotorVelocity& motor_velocity) {
