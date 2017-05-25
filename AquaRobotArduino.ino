@@ -21,16 +21,16 @@ const unsigned int ESC_PIN_HORIZONTAL_RIGHT = 6;
 const unsigned int ESC_PIN_HORIZONTAL_LEFT = 3;
 const unsigned int ESC_PINS[4] = {ESC_PIN_VERTICAL_RIGHT, ESC_PIN_VERTICAL_LEFT, ESC_PIN_HORIZONTAL_RIGHT, ESC_PIN_HORIZONTAL_LEFT};
 
+const unsigned int ESC_SERVO_INDEX_VERTICAL_RIGHT = 0;
+const unsigned int ESC_SERVO_INDEX_VERTICAL_LEFT = 1;
+const unsigned int ESC_SERVO_INDEX_HORIZONTAL_RIGHT = 2;
+const unsigned int ESC_SERVO_INDEX_HORIZONTAL_LEFT = 3;
+
 const unsigned int ESC_INPUT_MAX = 2000;
 const unsigned int ESC_INPUT_MIN = 1000;
 
 const unsigned int BATTERY_PIN = 0;
 const unsigned int BATTERY_CHECK_PIN = 2;
-
-const unsigned int ESC_SERVO_INDEX_VERTICAL_RIGHT = 0;
-const unsigned int ESC_SERVO_INDEX_VERTICAL_LEFT = 1;
-const unsigned int ESC_SERVO_INDEX_HORIZONTAL_RIGHT = 2;
-const unsigned int ESC_SERVO_INDEX_HORIZONTAL_LEFT = 3;
 
 Servo esc[4];
 
