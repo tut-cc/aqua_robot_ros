@@ -15,16 +15,12 @@ void setMotorVelocity(const aqua_robot_messages::MotorVelocity& motor_velocity);
 void setESCMinMax();
 void getMPUData();
 
-const unsigned int ESC_PIN_VERTICAL_RIGHT = 9;
-const unsigned int ESC_PIN_VERTICAL_LEFT = 5;
-const unsigned int ESC_PIN_HORIZONTAL_RIGHT = 6;
-const unsigned int ESC_PIN_HORIZONTAL_LEFT = 3;
-const unsigned int ESC_PINS[4] = {ESC_PIN_VERTICAL_RIGHT, ESC_PIN_VERTICAL_LEFT, ESC_PIN_HORIZONTAL_RIGHT, ESC_PIN_HORIZONTAL_LEFT};
-
-const unsigned int ESC_SERVO_INDEX_VERTICAL_RIGHT = 0;
-const unsigned int ESC_SERVO_INDEX_VERTICAL_LEFT = 1;
-const unsigned int ESC_SERVO_INDEX_HORIZONTAL_RIGHT = 2;
-const unsigned int ESC_SERVO_INDEX_HORIZONTAL_LEFT = 3;
+const unsigned int ESC_INDEX_VERTICAL_RIGHT = 0;
+const unsigned int ESC_INDEX_VERTICAL_LEFT = 1;
+const unsigned int ESC_INDEX_HORIZONTAL_RIGHT = 2;
+const unsigned int ESC_INDEX_HORIZONTAL_LEFT = 3;
+// 上記のESC_INDEXと対応させるよう注意
+const unsigned int ESC_PINS[4] = {9, 5, 6, 3};
 
 const unsigned int ESC_INPUT_MAX = 2000;
 const unsigned int ESC_INPUT_MIN = 1000;
@@ -110,11 +106,10 @@ void setESCMinMax()
 }
 
 void setMotorVelocity(const aqua_robot_messages::MotorVelocity& motor_velocity) {
-  // writeMicroseconds(2000)がESCの最大出力
-  esc[ESC_SERVO_INDEX_VERTICAL_RIGHT].writeMicroseconds(ESC_INPUT_MIN + (motor_velocity.motor_vertical_right * (ESC_INPUT_MAX - ESC_INPUT_MIN) / 255));
-  esc[ESC_SERVO_INDEX_VERTICAL_LEFT].writeMicroseconds(ESC_INPUT_MIN + (motor_velocity.motor_vertical_left * (ESC_INPUT_MAX - ESC_INPUT_MIN) / 255));
-  esc[ESC_SERVO_INDEX_HORIZONTAL_RIGHT].writeMicroseconds(ESC_INPUT_MIN + (motor_velocity.motor_horizontal_right * (ESC_INPUT_MAX - ESC_INPUT_MIN) / 255));
-  esc[ESC_SERVO_INDEX_HORIZONTAL_LEFT].writeMicroseconds(ESC_INPUT_MIN + (motor_velocity.motor_horizontal_left * (ESC_INPUT_MAX - ESC_INPUT_MIN) / 255));
+  esc[ESC_INDEX_VERTICAL_RIGHT].writeMicroseconds(ESC_INPUT_MIN + (motor_velocity.motor_vertical_right * (ESC_INPUT_MAX - ESC_INPUT_MIN) / 255));
+  esc[ESC_INDEX_VERTICAL_LEFT].writeMicroseconds(ESC_INPUT_MIN + (motor_velocity.motor_vertical_left * (ESC_INPUT_MAX - ESC_INPUT_MIN) / 255));
+  esc[ESC_INDEX_HORIZONTAL_RIGHT].writeMicroseconds(ESC_INPUT_MIN + (motor_velocity.motor_horizontal_right * (ESC_INPUT_MAX - ESC_INPUT_MIN) / 255));
+  esc[ESC_INDEX_HORIZONTAL_LEFT].writeMicroseconds(ESC_INPUT_MIN + (motor_velocity.motor_horizontal_left * (ESC_INPUT_MAX - ESC_INPUT_MIN) / 255));
 }
 
 // MPU6050より各種データを取得、publish用messageにセットする
