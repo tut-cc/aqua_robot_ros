@@ -12,7 +12,7 @@
 #include "MPU6050_6Axis_MotionApps20.h"
 
 void setMotorVelocity(const aqua_robot_messages::MotorVelocity& motor_velocity);
-void setupESC();
+void setESCMinMax();
 
 const unsigned int ESC_PIN_VERTICAL_RIGHT = 9;
 const unsigned int ESC_PIN_VERTICAL_LEFT = 5;
@@ -52,7 +52,7 @@ void setup() {
     pinMode(ESC_PINS[i], OUTPUT);
     esc[i].attach(ESC_PINS[i]);
   }
-  // setupESC(); // ESCの設定が必要ならコメント解除
+  // setESCMinMax(); // ESCの最大・最小入力値の設定が必要ならコメント解除
   // モータを停止状態に、ESCへの入力が0の場合ブザーが鳴る
   // クライアントからの入力が来なければ、ブザーが鳴り続ける
   for(int i = 0; i < sizeof(ESC_PINS) / sizeof(unsigned int); i++)
@@ -113,7 +113,7 @@ void loop() {
 }
 
 // ESCの最大出力・最小出力に対応する入力パルス波形を設定する関数
-void setupESC()
+void setESCMinMax()
 {
   // ESCの電源を切った状態で、最大出力時のパルス波形を入力
   for(int i = 0; i < sizeof(ESC_PINS) / sizeof(unsigned int); i++){
