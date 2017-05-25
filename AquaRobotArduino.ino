@@ -106,10 +106,15 @@ void setESCMinMax()
 }
 
 void setMotorVelocity(const aqua_robot_messages::MotorVelocity& motor_velocity) {
-  esc[ESC_INDEX_VERTICAL_RIGHT].writeMicroseconds(ESC_INPUT_MIN + (motor_velocity.motor_vertical_right * (ESC_INPUT_MAX - ESC_INPUT_MIN) / 255));
-  esc[ESC_INDEX_VERTICAL_LEFT].writeMicroseconds(ESC_INPUT_MIN + (motor_velocity.motor_vertical_left * (ESC_INPUT_MAX - ESC_INPUT_MIN) / 255));
-  esc[ESC_INDEX_HORIZONTAL_RIGHT].writeMicroseconds(ESC_INPUT_MIN + (motor_velocity.motor_horizontal_right * (ESC_INPUT_MAX - ESC_INPUT_MIN) / 255));
-  esc[ESC_INDEX_HORIZONTAL_LEFT].writeMicroseconds(ESC_INPUT_MIN + (motor_velocity.motor_horizontal_left * (ESC_INPUT_MAX - ESC_INPUT_MIN) / 255));
+  unsigned int motorVelocity[4];
+  motorVelocity[ESC_INDEX_VERTICAL_RIGHT] = motor_velocity.motor_vertical_right;
+  motorVelocity[ESC_INDEX_VERTICAL_LEFT] = motor_velocity.motor_vertical_left;
+  motorVelocity[ESC_INDEX_HORIZONTAL_RIGHT] = motor_velocity.motor_horizontal_right;
+  motorVelocity[ESC_INDEX_HORIZONTAL_LEFT] = motor_velocity.motor_horizontal_left;
+  
+  for(int i = 0; i < 4; i++) {
+    esc[i].writeMicroseconds(ESC_INPUT_MIN + (motorVelocity[i] * (ESC_INPUT_MAX - ESC_INPUT_MIN) / 255));
+  }
 }
 
 // MPU6050より各種データを取得、publish用messageにセットする
