@@ -48,23 +48,15 @@ void setup() {
   
   Wire.begin();
   
-  // setupESC(); // ESCの設定が必要ならコメント解除
-  
-  // ESCの初期化 ESCへの入力が0の場合、モータは動かずにブザーが鳴る
   for(int i = 0; i < sizeof(ESC_PINS) / sizeof(unsigned int); i++) {
     pinMode(ESC_PINS[i], OUTPUT);
     esc[i].attach(ESC_PINS[i]);
+  }
+  // setupESC(); // ESCの設定が必要ならコメント解除
+  // モータを停止状態に、ESCへの入力が0の場合ブザーが鳴る
+  // クライアントからの入力が来なければ、ブザーが鳴り続ける
+  for(int i = 0; i < sizeof(ESC_PINS) / sizeof(unsigned int); i++)
     esc[i].writeMicroseconds(0);
-  }
-  
-  // バッテリがオンになるまで待機？
-  pinMode(BATTERY_CHECK_PIN, INPUT);
-  while(digitalRead(BATTERY_CHECK_PIN) == 0);
-
-  // ESCが1000以下の場合、モータは停止したまま
-  for(int i = 0; i < sizeof(ESC_PINS) / sizeof(unsigned int); i++) {
-    esc[i].writeMicroseconds(1000);
-  }
   
   // MPUの初期化
   mpu.initialize();
