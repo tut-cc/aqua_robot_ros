@@ -33,7 +33,7 @@ aqua_robot_messages::State stateMsg;
 
 // デフォルトのノード設定だとメモリを食い過ぎて死ぬので、制限をかけておく
 // ros::NodeHandle nodeHandle;
-ros::NodeHandle_<ArduinoHardware, 1, 1, 80, 250> nodeHandle; 
+ros::NodeHandle_<ArduinoHardware, 1, 1, 16, 64> nodeHandle; 
 ros::Subscriber<aqua_robot_messages::MotorVelocity> motorSubscriber("set_motor_velocity", &setMotorVelocity);
 ros::Publisher statePublisher("status", &stateMsg);
 
