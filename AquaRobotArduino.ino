@@ -22,6 +22,11 @@ const unsigned int ESC_PINS[4] = {ESC_PIN_VERTICAL_RIGHT, ESC_PIN_VERTICAL_LEFT,
 const unsigned int BATTERY_PIN = 0;
 const unsigned int BATTERY_CHECK_PIN = 2;
 
+const unsigned int ESC_SERVO_INDEX_VERTICAL_RIGHT = 0;
+const unsigned int ESC_SERVO_INDEX_VERTICAL_LEFT = 1;
+const unsigned int ESC_SERVO_INDEX_HORIZONTAL_RIGHT = 2;
+const unsigned int ESC_SERVO_INDEX_HORIZONTAL_LEFT = 3;
+
 Servo esc[4];
 
 aqua_robot_messages::State stateMsg;
@@ -114,8 +119,8 @@ void loop() {
 
 void setMotorVelocity(const aqua_robot_messages::MotorVelocity& motor_velocity) {
   // writeMicroseconds(2000)がESCの最大出力
-  esc[0].writeMicroseconds(1000 + (motor_velocity.motor1 * 1000 / 255));
-  esc[1].writeMicroseconds(1000 + (motor_velocity.motor2 * 1000 / 255));
-  esc[2].writeMicroseconds(1000 + (motor_velocity.motor3 * 1000 / 255));
-  esc[3].writeMicroseconds(1000 + (motor_velocity.motor4 * 1000 / 255));
+  esc[ESC_SERVO_INDEX_VERTICAL_RIGHT].writeMicroseconds(1000 + (motor_velocity.motor_vertical_right * 1000 / 255));
+  esc[ESC_SERVO_INDEX_VERTICAL_LEFT].writeMicroseconds(1000 + (motor_velocity.motor_vertical_left * 1000 / 255));
+  esc[ESC_SERVO_INDEX_HORIZONTAL_RIGHT].writeMicroseconds(1000 + (motor_velocity.motor_horizontal_right * 1000 / 255));
+  esc[ESC_SERVO_INDEX_HORIZONTAL_LEFT].writeMicroseconds(1000 + (motor_velocity.motor_horizontal_left * 1000 / 255));
 }
