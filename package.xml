@@ -4,9 +4,9 @@
   <version>0.0.1</version>
   <description>水中ロボット内（Arduino-Raspberry Pi間）通信で使用するメッセージ集</description>
 
-  <maintainer email="fujimoto@aisl.cs.tut.ac.jp">Hironori Fujimoto</maintainer>
+  <maintainer email="broadbarredfirefish@gmail.com">Hironori Fujimoto</maintainer>
   <license>TODO</license>
-  <author email="fujimoto@aisl.cs.tut.ac.jp">Hironori Fujimoto</author> -->
+  <author email="broadbarredfirefish@gmail">Hironori Fujimoto</author>
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>message_generation</build_depend>
