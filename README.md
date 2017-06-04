@@ -10,6 +10,12 @@
 
 また、https://github.com/tut-cc/aqua_robot_messages から生成できるArduino向けヘッダも必要
 
+## ノードの起動方法
+
+以下を参照
+
+http://wiki.ros.org/rosserial_arduino/Tutorials/Hello%20World#Running_the_Code
+
 ## Publish Topic
 
 state: MPU6050から取得したデータとバッテリ電圧
