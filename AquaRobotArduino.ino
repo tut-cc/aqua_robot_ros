@@ -9,10 +9,12 @@
 #include "Wire.h"
 #include "Servo.h"
 #include "MPU6050_6Axis_MotionApps20.h"
+#include "MsTimer2.h"
 
 void setMotorVelocity(const aqua_robot_messages::MotorVelocity& motor_velocity);
 void setESCMinMax();
 void getMPUData();
+void stopMotorOnDisconnected();
 
 const unsigned int ESC_INDEX_VERTICAL_RIGHT = 0;
 const unsigned int ESC_INDEX_VERTICAL_LEFT = 1;
@@ -27,6 +29,11 @@ const unsigned int ESC_INPUT_MIN = 1000;
 
 const unsigned int BATTERY_PIN = 0;
 const unsigned int BATTERY_CHECK_PIN = 2;
+
+// MotorVelocityの入力が途絶えてから、モータを停止するまでの時間
+const unsigned int STOP_TIME_MILISECOND = 2000;
+
+volatile unsigned long setMotorTime = 0;
 
 Servo esc[4];
 
@@ -57,6 +64,12 @@ void setup() {
   // クライアントからの入力が来なければ、ブザーが鳴り続ける
   for(int i = 0; i < ESC_NUM; i++)
     esc[i].writeMicroseconds(0);
+  
+  // 割り込みをセット
+  // 一定間隔でMotorVelocityの受信を確認し、途絶えていればESCへの入力を0にする
+  setMotorTime = millis();
+  MsTimer2::set(STOP_TIME_MILISECOND, stopMotorOnDisconnected);
+  MsTimer2::start();
   
   // MPUの初期化
   mpu.initialize();
@@ -112,9 +125,10 @@ void setMotorVelocity(const aqua_robot_messages::MotorVelocity& motor_velocity) 
   motorVelocity[ESC_INDEX_HORIZONTAL_RIGHT] = motor_velocity.motor_horizontal_right;
   motorVelocity[ESC_INDEX_HORIZONTAL_LEFT] = motor_velocity.motor_horizontal_left;
   
-  for(int i = 0; i < ESC_NUM; i++) {
+  for(int i = 0; i < ESC_NUM; i++)
     esc[i].writeMicroseconds(ESC_INPUT_MIN + (motorVelocity[i] * (ESC_INPUT_MAX - ESC_INPUT_MIN) / 255));
-  }
+  
+  setMotorTime = millis();
 }
 
 // MPU6050より各種データを取得、publish用messageにセットする
@@ -149,4 +163,11 @@ void getMPUData() {
   stateMsg.angular_velocity.x = angularVelocity.x / 16.4;
   stateMsg.angular_velocity.y = angularVelocity.y / 16.4;
   stateMsg.angular_velocity.z = angularVelocity.z / 16.4;
+}
+
+void stopMotorOnDisconnected() {
+  if(millis() - setMotorTime >= STOP_TIME_MILISECOND) {
+    for(int i = 0; i < ESC_NUM; i++)
+      esc[i].writeMicroseconds(0);
+  }
 }
