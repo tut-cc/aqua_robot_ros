@@ -5,7 +5,7 @@
   <description>水中ロボット内（Arduino-Raspberry Pi間）通信で使用するメッセージ集</description>
 
   <maintainer email="broadbarredfirefish@gmail.com">Hironori Fujimoto</maintainer>
-  <license>TODO</license>
+  <license>BSD</license>
   <author email="broadbarredfirefish@gmail">Hironori Fujimoto</author>
 
   <buildtool_depend>catkin</buildtool_depend>
