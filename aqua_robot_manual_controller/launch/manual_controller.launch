@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+  <machine name="raspberry_pi3" address="TODO.todo" env-loader="/to/do/todo.sh" default="never" user="TODO" passward="should_use_ssh_keys_and_agent"/>
+  
+  <group ns="aqua_robot">
+    <node name="arduino" machine="raspberry_pi3" pkg="rosserial_python" type="serial_node.py" args="/dev/ttyACM0" required="true"/>
+    <node name="camera" machine="raspberry_pi3" pkg="todo" type="todo" required="true"/>
+  </group>
+  
+  <group ns="aqua_robot_controller">
+    <node name="xbox_gamepad" pkg="joy" type="joy_node" required="true"/>
+    <node name="manual_controller" pkg="aqua_robot_manual_controller" type="manual_controller" required="true"/>
+  </group>
+</launch>
