@@ -6,7 +6,7 @@
 
   <maintainer email="broadbarredfirefish@gmail.com">Hironori Fujimoto</maintainer>
   <license>BSD</license>
-  <author email="broadbarredfirefish@gmail">Hironori Fujimoto</author>
+  <author email="broadbarredfirefish@gmail.com">Hironori Fujimoto</author>
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>message_generation</build_depend>
