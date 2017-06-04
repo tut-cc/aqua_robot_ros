@@ -6,6 +6,7 @@
 
 - i2cdev、MPU6050：https://github.com/jrowberg/i2cdevlib
 - rosserial_arduino：http://wiki.ros.org/rosserial_arduino/Tutorials/Arduino%20IDE%20Setup
+- MsTimer2：https://playground.arduino.cc/Main/MsTimer2
 
 また、https://github.com/tut-cc/aqua_robot_messages から生成できるArduino向けヘッダも必要
 
