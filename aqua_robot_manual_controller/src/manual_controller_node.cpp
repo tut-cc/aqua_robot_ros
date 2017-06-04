@@ -3,7 +3,8 @@
 #include <aqua_robot_messages/MotorVelocity.h>
 
 // Joyメッセージの要素Axisのインデックス
-const unsigned int JOY_AXIS_LEFT_STICK_UP_DOWN = 0;
+// 参考：http://wiki.ros.org/joy#Microsoft_Xbox_360_Wired_Controller_for_Linux
+const unsigned int JOY_AXIS_LEFT_STICK_UP_DOWN = 1;
 const unsigned int JOY_AXIS_RIGHT_STICK_UP_DOWN = 4;
 const unsigned int JOY_AXIS_LEFT_TRIGGER = 2;
 const unsigned int JOY_AXIS_RIGHT_TRIGGER = 5;
