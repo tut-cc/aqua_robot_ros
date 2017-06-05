@@ -31,6 +31,9 @@ int main(int argc, char *argv[]) {
   ros::Publisher motor_publisher = node_handle.advertise<aqua_robot_messages::MotorVelocity>("set_motor_velocity", 10);
   ros::Subscriber joy_subscriber = node_handle.subscribe("joy", 10, joyCallback);
   
+  ROS_INFO_STREAM("publish: set motor velocity node: " << motor_publisher.getTopic());
+  ROS_INFO_STREAM("subscribe: xbox controller node: " << joy_subscriber.getTopic());
+  
   while(ros::ok()) {
     motor_publisher.publish(motor_msg);
     ros::spinOnce();
