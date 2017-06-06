@@ -6,7 +6,9 @@
   
   <group ns="aqua_robot">
     <node name="arduino" machine="raspberry_pi3" pkg="rosserial_python" type="serial_node.py" args="/dev/ttyACM0" required="true"/>
+    <!--
     <node name="camera" machine="raspberry_pi3" pkg="todo" type="todo" required="true"/>
+    -->
   </group>
   
   <group ns="aqua_robot_controller">
