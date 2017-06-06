@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <launch>
   <machine name="raspberry_pi3" address="TODO.todo" env-loader="/to/do/todo.sh" default="never" user="TODO" passward="should_use_ssh_keys_and_agent"/>
   
