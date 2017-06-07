@@ -2,7 +2,7 @@
   <arg name="raspberry_pi3_address" default="192.168.1.2"/>
   <arg name="raspberry_pi3_password"/>
   <arg name="raspberry_pi3_username"/>
-  <machine name="raspberry_pi3" address="$(arg raspberry_pi3_address)" env-loader="/home/tut/ros_remote_env_loader.sh" default="never" user="$(arg raspberry_pi3_username)" passward="$(arg raspberry_pi3_password)"/>
+  <machine name="raspberry_pi3" address="$(arg raspberry_pi3_address)" env-loader="/home/tut/ros_remote_env_loader.sh" default="never" user="$(arg raspberry_pi3_username)" password="$(arg raspberry_pi3_password)"/>
   
   <group ns="aqua_robot">
     <node name="arduino" machine="raspberry_pi3" pkg="rosserial_python" type="serial_node.py" args="/dev/ttyACM0" required="true"/>
