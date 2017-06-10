@@ -38,10 +38,12 @@ volatile unsigned long setMotorTime = 0;
 Servo esc[4];
 
 aqua_robot_messages::State stateMsg;
+// 受信したstateMsgの値を格納しておくための配列
+unsigned int motorVelocity[ESC_NUM];
 
 // デフォルトのノード設定だとメモリを食い過ぎて死ぬので、制限をかけておく
 // ros::NodeHandle nodeHandle;
-ros::NodeHandle_<ArduinoHardware, 1, 1, 32, 128> nodeHandle; 
+ros::NodeHandle_<ArduinoHardware, 1, 1, 32, 128> nodeHandle;
 ros::Subscriber<aqua_robot_messages::MotorVelocity> motorSubscriber("set_motor_velocity", &setMotorVelocity);
 ros::Publisher statePublisher("status", &stateMsg);
 
@@ -52,9 +54,9 @@ void setup() {
   nodeHandle.initNode();
   nodeHandle.advertise(statePublisher);
   nodeHandle.subscribe(motorSubscriber);
-  
+
   Wire.begin();
-  
+
   for(int i = 0; i < ESC_NUM; i++) {
     pinMode(ESC_PINS[i], OUTPUT);
     esc[i].attach(ESC_PINS[i]);
@@ -64,35 +66,37 @@ void setup() {
   // クライアントからの入力が来なければ、ブザーが鳴り続ける
   for(int i = 0; i < ESC_NUM; i++)
     esc[i].writeMicroseconds(0);
-  
+
   // 割り込みをセット
   // 一定間隔でMotorVelocityの受信を確認し、途絶えていればESCへの入力を0にする
   setMotorTime = millis();
   MsTimer2::set(STOP_TIME_MILISECOND, stopMotorOnDisconnected);
   MsTimer2::start();
-  
+
   // MPUの初期化
   mpu.initialize();
   mpu.dmpInitialize();
-  
+
   // これらのオフセット値はサンプルからそのままコピーしてきたもの
   // 有効・正確であるかは未検証
   mpu.setXGyroOffset(270);
   mpu.setYGyroOffset(76);
   mpu.setZGyroOffset(-85);
   mpu.setZAccelOffset(1788);
-  
+
   mpu.setDMPEnabled(true);
-  
+
   mpuPacketSize = mpu.dmpGetFIFOPacketSize();
 }
 
 void loop() {
   stateMsg.battery = analogRead(BATTERY_PIN) / 1023.0 * 5.0;
   getMPUData();
-  
+
   statePublisher.publish(&stateMsg);
   nodeHandle.spinOnce();
+
+  updateESCInput();
 }
 
 // ESCの最大出力・最小出力に対応する入力パルス波形を設定する関数
@@ -102,32 +106,34 @@ void setESCMinMax()
   for(int i = 0; i < ESC_NUM; i++){
     esc[i].writeMicroseconds(ESC_INPUT_MAX);
   }
-  
+
   // ESCの電源が入るまで待機
   pinMode(BATTERY_CHECK_PIN,INPUT);
   while(digitalRead(BATTERY_CHECK_PIN) == 0);
-  
+
   delay(2000);
-  
+
   // 最小出力（モータは無回転）に対応するパルス波形を入力 これ以下のパルス波系はすべて無回転として扱われる
   // また、0を入力するとブザー音が鳴る
   for(int i = 0; i < ESC_NUM; i++){
     esc[i].writeMicroseconds(ESC_INPUT_MIN);
   }
-  
+
   delay(3000);
 }
 
+// subscribeしたmotor_velocityの値をもとに、ESCの入力を更新する
+void updateESCInput() {
+  for(int i = 0; i < ESC_NUM; i++)
+    esc[i].writeMicroseconds(ESC_INPUT_MIN + (motorVelocity[i] * (ESC_INPUT_MAX - ESC_INPUT_MIN) / 255));
+}
+
 void setMotorVelocity(const aqua_robot_messages::MotorVelocity& motor_velocity) {
-  unsigned int motorVelocity[ESC_NUM];
   motorVelocity[ESC_INDEX_VERTICAL_RIGHT] = motor_velocity.motor_vertical_right;
   motorVelocity[ESC_INDEX_VERTICAL_LEFT] = motor_velocity.motor_vertical_left;
   motorVelocity[ESC_INDEX_HORIZONTAL_RIGHT] = motor_velocity.motor_horizontal_right;
   motorVelocity[ESC_INDEX_HORIZONTAL_LEFT] = motor_velocity.motor_horizontal_left;
-  
-  for(int i = 0; i < ESC_NUM; i++)
-    esc[i].writeMicroseconds(ESC_INPUT_MIN + (motorVelocity[i] * (ESC_INPUT_MAX - ESC_INPUT_MIN) / 255));
-  
+
   setMotorTime = millis();
 }
 
@@ -139,7 +145,7 @@ void getMPUData() {
   }
   uint8_t fifoBuffer[64];
   mpu.getFIFOBytes(fifoBuffer, mpuPacketSize);
-  
+
   Quaternion quaternion;
   VectorFloat gravity;
   float yawPitchRoll[3];
@@ -149,7 +155,7 @@ void getMPUData() {
   stateMsg.yaw = yawPitchRoll[0] * 180 / M_PI;
   stateMsg.pitch = yawPitchRoll[1] * 180 / M_PI;
   stateMsg.roll = yawPitchRoll[2] * 180 / M_PI;
-  
+
   VectorInt16 accelWithGravity;
   VectorInt16 accel;
   mpu.dmpGetAccel(&accelWithGravity, fifoBuffer);
@@ -157,7 +163,7 @@ void getMPUData() {
   stateMsg.accel.x = accel.x / 8192.0;
   stateMsg.accel.y = accel.y / 8192.0;
   stateMsg.accel.z = accel.z / 8192.0;
-  
+
   VectorInt16 angularVelocity;
   mpu.dmpGetGyro(&angularVelocity, fifoBuffer);
   stateMsg.angular_velocity.x = angularVelocity.x / 16.4;
