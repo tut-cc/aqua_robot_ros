@@ -21,7 +21,9 @@
     <node name="xbox_gamepad" pkg="joy" type="joy_node" required="true">
       <param name="deadzone" value="0.2"/>
     </node>
-    <node name="manual_controller" pkg="aqua_robot_manual_controller" type="manual_controller" required="true"/>
+    <node name="manual_controller" pkg="aqua_robot_manual_controller" type="manual_controller" required="true">
+      <remap from="set_motor_velocity" to="/aqua_robot/set_motor_velocity"/>
+    </node>
   </group>
 
   <node name="rqt" pkg="rqt_gui" type="rqt_gui" args="--perspective-file $(find aqua_robot_manual_controller)/rqt/manual_controller.perspective" required="true"/>
