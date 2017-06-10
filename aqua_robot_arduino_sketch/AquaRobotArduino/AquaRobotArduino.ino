@@ -9,7 +9,6 @@
 #include "Wire.h"
 #include "Servo.h"
 #include "MPU6050_6Axis_MotionApps20.h"
-#include "MsTimer2.h"
 
 void setMotorVelocity(const aqua_robot_messages::MotorVelocity& motor_velocity);
 void setESCMinMax();
@@ -67,12 +66,6 @@ void setup() {
   for(int i = 0; i < ESC_NUM; i++)
     esc[i].writeMicroseconds(0);
 
-  // 割り込みをセット
-  // 一定間隔でMotorVelocityの受信を確認し、途絶えていればESCへの入力を0にする
-  setMotorTime = millis();
-  MsTimer2::set(STOP_TIME_MILISECOND, stopMotorOnDisconnected);
-  MsTimer2::start();
-
   // MPUの初期化
   mpu.initialize();
   mpu.dmpInitialize();
@@ -96,7 +89,12 @@ void loop() {
   statePublisher.publish(&stateMsg);
   nodeHandle.spinOnce();
 
-  updateESCInput();
+  if(millis() - setMotorTime > STOP_TIME_MILISECOND) {
+    for(int i = 0; i < ESC_NUM; i++)
+      esc[i].writeMicroseconds(0);
+  } else {
+    updateESCInput();
+  }
 }
 
 // ESCの最大出力・最小出力に対応する入力パルス波形を設定する関数
@@ -169,11 +167,4 @@ void getMPUData() {
   stateMsg.angular_velocity.x = angularVelocity.x / 16.4;
   stateMsg.angular_velocity.y = angularVelocity.y / 16.4;
   stateMsg.angular_velocity.z = angularVelocity.z / 16.4;
-}
-
-void stopMotorOnDisconnected() {
-  if(millis() - setMotorTime >= STOP_TIME_MILISECOND) {
-    for(int i = 0; i < ESC_NUM; i++)
-      esc[i].writeMicroseconds(0);
-  }
 }
