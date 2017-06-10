@@ -18,7 +18,9 @@
   </group>
 
   <group ns="aqua_robot_controller">
-    <node name="xbox_gamepad" pkg="joy" type="joy_node" required="true"/>
+    <node name="xbox_gamepad" pkg="joy" type="joy_node" required="true">
+      <param name="deadzone" value="0.2"/>
+    </node>
     <node name="manual_controller" pkg="aqua_robot_manual_controller" type="manual_controller" required="true"/>
   </group>
 
