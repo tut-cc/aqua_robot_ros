@@ -1,3 +1,6 @@
 # Kdevelop4のプロジェクト関係ファイル
 .kdev4/
 *.kdev4
+
+# 生成されるArduino用ヘッダ
+aqua_robot_arduino_sketch/AquaRobotArduino/libraries
