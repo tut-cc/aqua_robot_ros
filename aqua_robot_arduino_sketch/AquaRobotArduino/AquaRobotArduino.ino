@@ -30,7 +30,7 @@ const unsigned int BATTERY_PIN = 0;
 const unsigned int BATTERY_CHECK_PIN = 2;
 
 // MotorVelocityの入力が途絶えてから、モータを停止するまでの時間
-const unsigned int STOP_TIME_MILISECOND = 2000;
+const unsigned int ALLOW_DISCONNECTED_TIME = 2000;
 
 volatile unsigned long setMotorTime = 0;
 
@@ -89,7 +89,7 @@ void loop() {
   statePublisher.publish(&stateMsg);
   nodeHandle.spinOnce();
 
-  if(millis() - setMotorTime > STOP_TIME_MILISECOND) {
+  if(millis() - setMotorTime > ALLOW_DISCONNECTED_TIME) {
     for(int i = 0; i < ESC_NUM; i++)
       esc[i].writeMicroseconds(0);
   } else {
