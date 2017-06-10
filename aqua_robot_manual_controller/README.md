@@ -6,9 +6,9 @@ joyノードからの入力をMotorVelocityメッセージに変換して、Ardu
 
 ## このノードを含めた、水中ロボット ROS システムの起動方法
 
-<USER_NAME>と<PASSWD>に適切な値を設定して、以下のコマンドを実行してください。
+USER_NAMEとPASSWORDに適切な値を設定して、以下のコマンドを実行してください。
 
-ROSLAUNCH_SSH_UNKNOWN=1 ROS_IP=192.168.1.254 roslaunch aqua_robot_manual_controller manual_controller.launch raspberry_pi3_username:=<USER_NAME> raspberry_pi3_password:=<PASSWORD>
+    ROSLAUNCH_SSH_UNKNOWN=1 ROS_IP=192.168.1.254 roslaunch aqua_robot_manual_controller manual_controller.launch raspberry_pi3_username:=<USER_NAME> raspberry_pi3_password:=<PASSWORD>
 
 ## 操作方法
 
