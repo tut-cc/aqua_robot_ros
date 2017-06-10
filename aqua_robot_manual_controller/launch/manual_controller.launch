@@ -13,7 +13,6 @@
       <param name="width" value="1280"/>
       <param name="height" value="960"/>
       <param name="framerate" value="30"/>
-
       <param name="camera_frame_id" value="raspicam"/>
     </node>
   </group>
@@ -22,4 +21,6 @@
     <node name="xbox_gamepad" pkg="joy" type="joy_node" required="true"/>
     <node name="manual_controller" pkg="aqua_robot_manual_controller" type="manual_controller" required="true"/>
   </group>
+
+  <node name="rqt" pkg="rqt_gui" type="rqt_gui" args="--perspective-file $(find aqua_robot_manual_controller)/rqt/manual_controller.perspective" required="true"/>
 </launch>
