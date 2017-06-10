@@ -29,7 +29,7 @@ const unsigned int ESC_INPUT_MIN = 1000;
 const unsigned int BATTERY_PIN = 0;
 const unsigned int BATTERY_CHECK_PIN = 2;
 
-// MotorVelocityの入力が途絶えてから、モータを停止するまでの時間
+// MotorVelocityの入力が途絶えてから、モータを停止するまでの時間[milli second]
 const unsigned int ALLOW_DISCONNECTED_TIME = 2000;
 
 volatile unsigned long setMotorTime = 0;
