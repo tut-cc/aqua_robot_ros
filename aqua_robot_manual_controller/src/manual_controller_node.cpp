@@ -22,8 +22,8 @@ int main(int argc, char *argv[]) {
   ros::init(argc, argv, "aqua_robot_manual_controller");
   ros::NodeHandle node_handle;
 
-  // カメラ画像は60fps以下のため、Arduinoへの命令送信周期も60Hz程度で十分
-  ros::Rate publish_rate(60);
+  // カメラ画像は30fps以下のため、Arduinoへの命令送信周期も30Hz程度で十分
+  ros::Rate publish_rate(30);
 
   motor_msg.motor_horizontal_left = 0;
   motor_msg.motor_horizontal_right =0;
