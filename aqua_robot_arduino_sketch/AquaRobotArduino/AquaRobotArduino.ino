@@ -53,7 +53,7 @@ aqua_robot_messages::EmergencyModeOrder emergencyMsg;
 
 // デフォルトのノード設定だとメモリを食い過ぎて死ぬので、制限をかけておく
 // ros::NodeHandle nodeHandle;
-ros::NodeHandle_<ArduinoHardware, 2, 1, 32, 100> nodeHandle;
+ros::NodeHandle_<ArduinoHardware, 2, 1, 32, 110> nodeHandle;
 ros::Subscriber<aqua_robot_messages::MotorVelocity> motorSubscriber("set_motor_velocity", &setMotorVelocityCallback);
 ros::Subscriber<aqua_robot_messages::EmergencyModeOrder> emergencySubscriber("set_emergency_mode", &setEmergencyModeCallback);
 ros::Publisher statePublisher("status", &stateMsg);
