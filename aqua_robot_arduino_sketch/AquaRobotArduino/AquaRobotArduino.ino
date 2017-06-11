@@ -14,6 +14,7 @@
 void setMotorVelocityCallback(const aqua_robot_messages::MotorVelocity&);
 void setEmergencyModeCallback(const aqua_robot_messages::EmergencyModeOrder&);
 void setESCMinMax();
+void createStateMessage();
 void getMPUData();
 void stopMotorOnDisconnected();
 void enableEmergencyMode();
@@ -71,6 +72,7 @@ void setup() {
   for(int i = 0; i < ESC_NUM; i++) {
     pinMode(ESC_PINS[i], OUTPUT);
     esc[i].attach(ESC_PINS[i]);
+    motorVelocity[i] = 0;
   }
 
   // ESCの入力値設定が必要な場合はコメント解除
@@ -97,10 +99,7 @@ void setup() {
 }
 
 void loop() {
-  stateMsg.emergency_mode = emergencyMode;
-  stateMsg.battery = analogRead(BATTERY_PIN) / 1023.0 * 5.0;
-  getMPUData();
-
+  createStateMessage();
   statePublisher.publish(&stateMsg);
   nodeHandle.spinOnce();
 
@@ -110,6 +109,19 @@ void loop() {
     }
   }
   updateESCInput();
+}
+
+// publishするStateメッセージの作成
+void createStateMessage() {
+  stateMsg.emergency_mode = emergencyMode;
+  stateMsg.battery = analogRead(BATTERY_PIN) / 1023.0 * 5.0;
+
+  stateMsg.motor_velocity.motor_vertical_left = motorVelocity[ESC_INDEX_VERTICAL_LEFT];
+  stateMsg.motor_velocity.motor_vertical_right = motorVelocity[ESC_INDEX_VERTICAL_RIGHT];
+  stateMsg.motor_velocity.motor_horizontal_left = motorVelocity[ESC_INDEX_HORIZONTAL_LEFT];
+  stateMsg.motor_velocity.motor_horizontal_right = motorVelocity[ESC_INDEX_HORIZONTAL_RIGHT];
+
+  getMPUData();
 }
 
 // ESCの最大出力・最小出力に対応する入力パルス波形を設定する関数

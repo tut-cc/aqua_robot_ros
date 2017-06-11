@@ -14,3 +14,5 @@ float32 yaw
 
 # emergency_modeがtrueであれば、モータは全て停止し、ESCから定期的にブザー音が鳴る
 bool emergency_mode
+
+aqua_robot_messages/MotorVelocity motor_velocity
