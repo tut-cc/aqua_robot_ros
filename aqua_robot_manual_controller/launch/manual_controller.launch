@@ -23,6 +23,7 @@
     </node>
     <node name="manual_controller" pkg="aqua_robot_manual_controller" type="manual_controller" required="true">
       <remap from="set_motor_velocity" to="/aqua_robot/set_motor_velocity"/>
+      <remap from="set_emergency_mode" to="/aqua_robot/set_emergency_mode"/>
     </node>
   </group>
 
