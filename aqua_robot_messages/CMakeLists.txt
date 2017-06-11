@@ -15,6 +15,7 @@ add_message_files(
   FILES
   MotorVelocity.msg
   State.msg
+  EmergencyModeOrder.msg
 )
 
 generate_messages(
@@ -28,8 +29,8 @@ generate_messages(
 ###################################
 
 catkin_package(
-  CATKIN_DEPENDS 
-  message_runtime 
+  CATKIN_DEPENDS
+  message_runtime
   std_msgs
   geometry_msgs
 )

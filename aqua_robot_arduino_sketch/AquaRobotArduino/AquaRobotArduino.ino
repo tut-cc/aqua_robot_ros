@@ -3,6 +3,7 @@
  */
 
 #include <ros.h>
+#include <aqua_robot_messages/EmergencyModeOrder.h>
 #include <aqua_robot_messages/MotorVelocity.h>
 #include <aqua_robot_messages/State.h>
 
@@ -10,10 +11,13 @@
 #include "Servo.h"
 #include "MPU6050_6Axis_MotionApps20.h"
 
-void setMotorVelocity(const aqua_robot_messages::MotorVelocity& motor_velocity);
+void setMotorVelocityCallback(const aqua_robot_messages::MotorVelocity&);
+void setEmergencyModeCallback(const aqua_robot_messages::EmergencyModeOrder&);
 void setESCMinMax();
 void getMPUData();
 void stopMotorOnDisconnected();
+void enableEmergencyMode();
+void disableEmergencyMode();
 
 const unsigned int ESC_INDEX_VERTICAL_RIGHT = 0;
 const unsigned int ESC_INDEX_VERTICAL_LEFT = 1;
@@ -25,6 +29,8 @@ const unsigned int ESC_NUM = 4;
 
 const unsigned int ESC_INPUT_MAX = 2000;
 const unsigned int ESC_INPUT_MIN = 1000;
+// ESCにこの値を入力すると、モータは停止してESCからブザー音が定期的に鳴る
+const unsigned int ESC_INPUT_EMERGENCY_MODE = 0;
 
 const unsigned int BATTERY_PIN = 0;
 const unsigned int BATTERY_CHECK_PIN = 2;
@@ -33,6 +39,8 @@ const unsigned int BATTERY_CHECK_PIN = 2;
 const unsigned int ALLOW_DISCONNECTED_TIME = 2000;
 
 volatile unsigned long setMotorTime = 0;
+// emergencyMode: これが有効になると、全モータが停止し、ESCからブザー音が定期的に鳴る
+bool emergencyMode = true;
 
 Servo esc[4];
 
@@ -40,10 +48,13 @@ aqua_robot_messages::State stateMsg;
 // 受信したstateMsgの値を格納しておくための配列
 unsigned int motorVelocity[ESC_NUM];
 
+aqua_robot_messages::EmergencyModeOrder emergencyMsg;
+
 // デフォルトのノード設定だとメモリを食い過ぎて死ぬので、制限をかけておく
 // ros::NodeHandle nodeHandle;
-ros::NodeHandle_<ArduinoHardware, 1, 1, 32, 128> nodeHandle;
-ros::Subscriber<aqua_robot_messages::MotorVelocity> motorSubscriber("set_motor_velocity", &setMotorVelocity);
+ros::NodeHandle_<ArduinoHardware, 2, 1, 32, 100> nodeHandle;
+ros::Subscriber<aqua_robot_messages::MotorVelocity> motorSubscriber("set_motor_velocity", &setMotorVelocityCallback);
+ros::Subscriber<aqua_robot_messages::EmergencyModeOrder> emergencySubscriber("set_emergency_mode", &setEmergencyModeCallback);
 ros::Publisher statePublisher("status", &stateMsg);
 
 MPU6050 mpu;
@@ -53,6 +64,7 @@ void setup() {
   nodeHandle.initNode();
   nodeHandle.advertise(statePublisher);
   nodeHandle.subscribe(motorSubscriber);
+  nodeHandle.subscribe(emergencySubscriber);
 
   Wire.begin();
 
@@ -60,11 +72,13 @@ void setup() {
     pinMode(ESC_PINS[i], OUTPUT);
     esc[i].attach(ESC_PINS[i]);
   }
-  // setESCMinMax(); // ESCの最大・最小入力値の設定が必要ならコメント解除
-  // モータを停止状態に、ESCへの入力が0の場合ブザーが鳴る
-  // クライアントからの入力が来なければ、ブザーが鳴り続ける
-  for(int i = 0; i < ESC_NUM; i++)
-    esc[i].writeMicroseconds(0);
+
+  // ESCの入力値設定が必要な場合はコメント解除
+  // setESCMinMax();
+
+  // モータが誤作動を起こさぬように、起動時にはemergencyModeを有効にする
+  enableEmergencyMode();
+  updateESCInput();
 
   // MPUの初期化
   mpu.initialize();
@@ -83,18 +97,19 @@ void setup() {
 }
 
 void loop() {
+  stateMsg.emergency_mode = emergencyMode;
   stateMsg.battery = analogRead(BATTERY_PIN) / 1023.0 * 5.0;
   getMPUData();
 
   statePublisher.publish(&stateMsg);
   nodeHandle.spinOnce();
 
-  if(millis() - setMotorTime > ALLOW_DISCONNECTED_TIME) {
-    for(int i = 0; i < ESC_NUM; i++)
-      esc[i].writeMicroseconds(0);
-  } else {
-    updateESCInput();
+  if(!emergencyMode) {
+    if(millis() - setMotorTime > ALLOW_DISCONNECTED_TIME) {
+      enableEmergencyMode();
+    }
   }
+  updateESCInput();
 }
 
 // ESCの最大出力・最小出力に対応する入力パルス波形を設定する関数
@@ -121,18 +136,34 @@ void setESCMinMax()
 }
 
 // subscribeしたmotor_velocityの値をもとに、ESCの入力を更新する
+// escの入力値を変える関数は、setESCMinMaxとこれ以外は実装しないこと
 void updateESCInput() {
-  for(int i = 0; i < ESC_NUM; i++)
-    esc[i].writeMicroseconds(ESC_INPUT_MIN + (motorVelocity[i] * (ESC_INPUT_MAX - ESC_INPUT_MIN) / 255));
+  if(emergencyMode) {
+    for(int i = 0; i < ESC_NUM; i++) {
+      esc[i].writeMicroseconds(ESC_INPUT_EMERGENCY_MODE);
+    }
+  } else {
+    for(int i = 0; i < ESC_NUM; i++) {
+      esc[i].writeMicroseconds(ESC_INPUT_MIN + (motorVelocity[i] * (ESC_INPUT_MAX - ESC_INPUT_MIN) / 255));
+    }
+  }
 }
 
-void setMotorVelocity(const aqua_robot_messages::MotorVelocity& motor_velocity) {
+void setMotorVelocityCallback(const aqua_robot_messages::MotorVelocity& motor_velocity) {
   motorVelocity[ESC_INDEX_VERTICAL_RIGHT] = motor_velocity.motor_vertical_right;
   motorVelocity[ESC_INDEX_VERTICAL_LEFT] = motor_velocity.motor_vertical_left;
   motorVelocity[ESC_INDEX_HORIZONTAL_RIGHT] = motor_velocity.motor_horizontal_right;
   motorVelocity[ESC_INDEX_HORIZONTAL_LEFT] = motor_velocity.motor_horizontal_left;
 
   setMotorTime = millis();
+}
+
+void setEmergencyModeCallback(const aqua_robot_messages::EmergencyModeOrder& emergency_mode_order) {
+  // 緊急モードの有効化と解除が同時に送られてきた場合は、有効化を優先
+  if(emergency_mode_order.emergency_order)
+    enableEmergencyMode();
+  else if(emergency_mode_order.lift_emergency_order)
+    disableEmergencyMode();
 }
 
 // MPU6050より各種データを取得、publish用messageにセットする
@@ -167,4 +198,15 @@ void getMPUData() {
   stateMsg.angular_velocity.x = angularVelocity.x / 16.4;
   stateMsg.angular_velocity.y = angularVelocity.y / 16.4;
   stateMsg.angular_velocity.z = angularVelocity.z / 16.4;
+}
+
+// emergencyModeの有効化
+void enableEmergencyMode() {
+  emergencyMode = true;
+}
+
+// emergencyModeの無効化
+// 設計上の観点から、set_emergency_mode topicのsubscriber callback関数以外では呼び出さないこと
+void disableEmergencyMode() {
+  emergencyMode = false;
 }
