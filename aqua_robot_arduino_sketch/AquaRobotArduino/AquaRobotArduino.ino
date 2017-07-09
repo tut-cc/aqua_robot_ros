@@ -41,7 +41,7 @@ aqua_robot_messages::State stateMsg;
 
 // デフォルトのノード設定だとメモリを食い過ぎて死ぬので、制限をかけておく
 // ros::NodeHandle nodeHandle;
-ros::NodeHandle_<ArduinoHardware, 1, 1, 150, 150> nodeHandle; 
+ros::NodeHandle_<ArduinoHardware, 1, 1, 150, 150> nodeHandle;
 ros::Subscriber<aqua_robot_messages::MotorVelocity> motorSubscriber("set_motor_velocity", &setMotorVelocity);
 ros::Publisher statePublisher("status", &stateMsg);
 
@@ -88,10 +88,11 @@ void setup() {
 }
 
 void loop() {
-  stateMsg.battery = analogRead(BATTERY_PIN) / 1023.0 * 5.0;
-  getMPUData();
+  if(getMPUData()) {
+    stateMsg.battery = analogRead(BATTERY_PIN) / 1023.0 * 5.0;
+    statePublisher.publish(&stateMsg);
+  }
 
-  statePublisher.publish(&stateMsg);
   nodeHandle.spinOnce();
 }
 
@@ -132,13 +133,15 @@ void setMotorVelocity(const aqua_robot_messages::MotorVelocity& motor_velocity) 
 }
 
 // MPU6050より各種データを取得、publish用messageにセットする
-void getMPUData() {
-  // MPUのFIFOにデータが貯まるまで待機
-  mpu.resetFIFO();
-  for(uint16_t fifoCount = mpu.getFIFOCount(); fifoCount < mpuPacketSize; fifoCount = mpu.getFIFOCount()){
-  }
+bool getMPUData() {
+  uint16_t fifoCount = mpu.getFIFOCount();
+  if(fifoCount < mpuPacketSize)
+    return false;
+
   uint8_t fifoBuffer[64];
   mpu.getFIFOBytes(fifoBuffer, mpuPacketSize);
+
+  mpu.resetFIFO();
 
   Quaternion quaternion;
   VectorFloat gravity;
@@ -163,6 +166,8 @@ void getMPUData() {
   stateMsg.angular_velocity.x = angularVelocity.x / 16.4;
   stateMsg.angular_velocity.y = angularVelocity.y / 16.4;
   stateMsg.angular_velocity.z = angularVelocity.z / 16.4;
+
+  return true;
 }
 
 void stopMotorOnDisconnected() {
