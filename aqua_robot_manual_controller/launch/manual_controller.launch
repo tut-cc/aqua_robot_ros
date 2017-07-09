@@ -3,7 +3,7 @@
   <arg name="raspberry_pi3_password"/>
   <arg name="raspberry_pi3_username"/>
 
-  <machine name="master_pc" address="192.168.1.254" env-loader="$(find aqua_robot_manual_controller)/launch/env-loader/master_pc_set_env.sh" default="true"/>
+  <machine name="master_pc" address="192.168.1.1" env-loader="$(find aqua_robot_manual_controller)/launch/env-loader/master_pc_set_env.sh" default="true"/>
   <machine name="raspberry_pi3" address="$(arg raspberry_pi3_address)" env-loader="/home/tut/ros_remote_env_loader.sh" default="never" user="$(arg raspberry_pi3_username)" password="$(arg raspberry_pi3_password)"/>
 
   <group ns="aqua_robot">
