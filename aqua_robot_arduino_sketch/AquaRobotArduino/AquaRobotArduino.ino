@@ -9,12 +9,10 @@
 #include "Wire.h"
 #include "Servo.h"
 #include "MPU6050_6Axis_MotionApps20.h"
-#include "MsTimer2.h"
 
 void setMotorVelocity(const aqua_robot_messages::MotorVelocity& motor_velocity);
 void setESCMinMax();
-void getMPUData();
-void stopMotorOnDisconnected();
+bool getMPUData();
 
 const unsigned int ESC_INDEX_VERTICAL_RIGHT = 0;
 const unsigned int ESC_INDEX_VERTICAL_LEFT = 1;
@@ -31,9 +29,9 @@ const unsigned int BATTERY_PIN = 0;
 const unsigned int BATTERY_CHECK_PIN = 2;
 
 // MotorVelocityの入力が途絶えてから、モータを停止するまでの時間
-const unsigned int STOP_TIME_MILISECOND = 2000;
+const unsigned int MOTOR_STOP_TIME_MILLISECOND = 500;
 
-volatile unsigned long setMotorTime = 0;
+unsigned long lastMotorCommandTime = 0;
 
 Servo esc[4];
 
@@ -65,12 +63,6 @@ void setup() {
   for(int i = 0; i < ESC_NUM; i++)
     esc[i].writeMicroseconds(0);
 
-  // 割り込みをセット
-  // 一定間隔でMotorVelocityの受信を確認し、途絶えていればESCへの入力を0にする
-  setMotorTime = millis();
-  MsTimer2::set(STOP_TIME_MILISECOND, stopMotorOnDisconnected);
-  MsTimer2::start();
-
   // MPUの初期化
   mpu.initialize();
   mpu.dmpInitialize();
@@ -88,9 +80,20 @@ void setup() {
 }
 
 void loop() {
+  // 各センサデータの送信
   if(getMPUData()) {
     stateMsg.battery = analogRead(BATTERY_PIN) / 1023.0 * 5.0;
     statePublisher.publish(&stateMsg);
+  }
+
+  // 最後のモータ指令から、MOTOR_STOP_TIME_MILLISECOND以上経過していればモータを停止する
+  unsigned long now = millis();
+  if(now < lastMotorCommandTime) { // オーバーフロー時
+    lastMotorCommandTime = 0;
+  }
+  if(now - lastMotorCommandTime > MOTOR_STOP_TIME_MILLISECOND) {
+    for(int i = 0; i < ESC_NUM; i++)
+      esc[i].writeMicroseconds(0);
   }
 
   nodeHandle.spinOnce();
@@ -129,7 +132,7 @@ void setMotorVelocity(const aqua_robot_messages::MotorVelocity& motor_velocity) 
   for(int i = 0; i < ESC_NUM; i++)
     esc[i].writeMicroseconds(ESC_INPUT_MIN + (motorVelocity[i] * (ESC_INPUT_MAX - ESC_INPUT_MIN) / 255));
 
-  setMotorTime = millis();
+  lastMotorCommandTime = millis();
 }
 
 // MPU6050より各種データを取得、publish用messageにセットする
@@ -168,11 +171,4 @@ bool getMPUData() {
   stateMsg.angular_velocity.z = angularVelocity.z / 16.4;
 
   return true;
-}
-
-void stopMotorOnDisconnected() {
-  if(millis() - setMotorTime >= STOP_TIME_MILISECOND) {
-    for(int i = 0; i < ESC_NUM; i++)
-      esc[i].writeMicroseconds(0);
-  }
 }
