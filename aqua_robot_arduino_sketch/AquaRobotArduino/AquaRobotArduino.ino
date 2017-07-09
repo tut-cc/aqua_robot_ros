@@ -141,7 +141,7 @@ bool getMPUData() {
   uint8_t fifoBuffer[64];
   mpu.getFIFOBytes(fifoBuffer, mpuPacketSize);
 
-  mpu.resetFIFO();
+  mpu.resetFIFO(); // FIFOをリセットする必要があるのか検証する必要あり
 
   Quaternion quaternion;
   VectorFloat gravity;
