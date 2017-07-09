@@ -2,6 +2,8 @@
 #include <sensor_msgs/Joy.h>
 #include <aqua_robot_messages/MotorVelocity.h>
 
+const unsigned int MOTOR_VELOCITY_PUBLISH_RATE = 10;
+
 // Joyメッセージの要素Axisのインデックス
 // 参考：http://wiki.ros.org/joy#Microsoft_Xbox_360_Wired_Controller_for_Linux
 const unsigned int JOY_AXIS_LEFT_STICK_UP_DOWN = 1;
@@ -19,8 +21,7 @@ int main(int argc, char *argv[]) {
   ros::init(argc, argv, "aqua_robot_manual_controller");
   ros::NodeHandle node_handle;
   
-  // カメラ画像は60fps以下のため、Arduinoへの命令送信周期も60Hz程度で十分
-  ros::Rate publish_rate(60);
+  ros::Rate publish_rate(MOTOR_VELOCITY_PUBLISH_RATE);
   
   motor_msg.motor_horizontal_left = 0;
   motor_msg.motor_horizontal_right =0;
