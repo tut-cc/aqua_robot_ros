@@ -19,7 +19,7 @@ const unsigned int ESC_INDEX_VERTICAL_LEFT = 1;
 const unsigned int ESC_INDEX_HORIZONTAL_RIGHT = 2;
 const unsigned int ESC_INDEX_HORIZONTAL_LEFT = 3;
 // 上記のESC_INDEXと対応させるよう注意
-const unsigned int ESC_PINS[] = {9, 5, 6, 3};
+const unsigned int ESC_PINS[] = {9, 6, 5, 3};
 const unsigned int ESC_NUM = 4;
 
 const unsigned int ESC_INPUT_MAX = 2000;
