@@ -1,5 +1,6 @@
 # [V]
-float32 battery
+float32 battery0
+float32 battery1
 
 # [G]
 geometry_msgs/Vector3 accel
