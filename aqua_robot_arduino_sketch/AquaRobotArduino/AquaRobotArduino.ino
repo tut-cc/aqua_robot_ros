@@ -26,7 +26,7 @@ const unsigned int ESC_INPUT_MAX = 2000;
 const unsigned int ESC_INPUT_MIN = 1000;
 
 const unsigned int BATTERY_PIN = 0;
-const unsigned int BATTERY_CHECK_PIN = 2;
+const unsigned int ESC_CHECK_PIN = 2;
 
 // MotorVelocityの入力が途絶えてから、モータを停止するまでの時間
 const unsigned int MOTOR_STOP_TIME_MILLISECOND = 500;
@@ -108,8 +108,8 @@ void setESCMinMax()
   }
 
   // ESCの電源が入るまで待機
-  pinMode(BATTERY_CHECK_PIN,INPUT);
-  while(digitalRead(BATTERY_CHECK_PIN) == 0);
+  pinMode(ESC_CHECK_PIN,INPUT);
+  while(digitalRead(ESC_CHECK_PIN) == 0);
 
   delay(2000);
 
