@@ -170,5 +170,7 @@ bool getMPUData() {
   stateMsg.angular_velocity.y = angularVelocity.y / 16.4;
   stateMsg.angular_velocity.z = angularVelocity.z / 16.4;
 
+  stateMsg.temperature = (mpu.getTemperature()+12412.0)/340.0;
+
   return true;
 }
