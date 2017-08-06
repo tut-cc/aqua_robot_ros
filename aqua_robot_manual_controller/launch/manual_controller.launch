@@ -21,6 +21,7 @@
   <group ns="aqua_robot_controller">
     <node name="xbox_gamepad" pkg="joy" type="joy_node" required="true">
       <param name="deadzone" value="0.2"/>
+      <param name="dev" value="/dev/input/js1"/> <!-- dm1-3000には、標準でjs0というデバイスが存在する -->
     </node>
     <node name="manual_controller" pkg="aqua_robot_manual_controller" type="manual_controller" required="true">
       <remap from="set_motor_velocity" to="/aqua_robot/set_motor_velocity"/>
