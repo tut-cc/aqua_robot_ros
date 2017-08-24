@@ -26,7 +26,7 @@ const unsigned int ESC_INPUT_MAX = 2000;
 const unsigned int ESC_INPUT_MIN = 1000;
 
 const unsigned int BATTERY0_PIN = 0;
-const unsigned int BATTERY1_PIN = 0; // ピン番号はまだ決まっていないので、BATTERY0と同じ値にしてある
+const unsigned int BATTERY1_PIN = 1;
 const unsigned int ESC_CHECK_PIN = 2;
 
 // MotorVelocityの入力が途絶えてから、モータを停止するまでの時間
@@ -83,8 +83,8 @@ void setup() {
 void loop() {
   // 各センサデータの送信
   if(getMPUData()) {
-    stateMsg.battery0 = analogRead(BATTERY0_PIN) / 1023.0 * 5.0;
-    stateMsg.battery1 = analogRead(BATTERY1_PIN) / 1023.0 * 5.0;
+    stateMsg.battery0 = analogRead(BATTERY0_PIN) / 1023.0 * 5.0 * 3.0; // 分圧：2k 1k
+    stateMsg.battery1 = analogRead(BATTERY1_PIN) / 1023.0 * 5.0 * 2.5; // 分圧：15k 10k
     statePublisher.publish(&stateMsg);
   }
 
