@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   cv_bridge
   message_generation
+  std_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -105,7 +106,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES aqua_robot_line_trace
-  CATKIN_DEPENDS roscpp cv_bridge message_runtime
+  CATKIN_DEPENDS roscpp cv_bridge message_runtime std_msgs
   DEPENDS OpenCV
 )
 
