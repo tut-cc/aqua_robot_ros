@@ -54,7 +54,7 @@ void imageCallback(const sensor_msgs::Image::ConstPtr& msg)
   }
 
   std::cout << "length" << max_length << std::endl;
-  if(max_length_contour != -1 && max_length > std::min(msg->height, msg->width) / 2) {
+  if(max_length_contour != -1 && max_length > std::min(msg->height, msg->width)) {
     std::vector<double> fit_line;
     cv::fitLine(contours[max_length_contour], fit_line, cv::DIST_L2, 0, 0.01, 0.01);
 
@@ -63,6 +63,8 @@ void imageCallback(const sensor_msgs::Image::ConstPtr& msg)
     line.vy = fit_line[1];
     line.px = fit_line[2];
     line.py = fit_line[3];
+    line.image_height = msg->height;
+    line.image_width = msg->width;
 
     pub.publish(line);
 
