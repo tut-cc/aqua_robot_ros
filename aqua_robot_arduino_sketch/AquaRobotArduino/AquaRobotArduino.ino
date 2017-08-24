@@ -12,6 +12,7 @@
 
 void setMotorVelocity(const aqua_robot_messages::MotorVelocity& motor_velocity);
 void setESCMinMax();
+void initMPU();
 bool getMPUData();
 
 const unsigned int ESC_INDEX_VERTICAL_RIGHT = 0;
@@ -32,6 +33,9 @@ const unsigned int ESC_CHECK_PIN = 2;
 // MotorVelocityの入力が途絶えてから、モータを停止するまでの時間
 const unsigned int MOTOR_STOP_TIME_MILLISECOND = 500;
 
+// この時間内にMPUから新しいデータを取得できなかった場合、MPUをリセットする
+const unsigned int MPU_RESET_TIME_MILLISECOND = 100;
+
 unsigned long lastMotorCommandTime = 0;
 
 Servo esc[4];
@@ -46,6 +50,7 @@ ros::Publisher statePublisher("status", &stateMsg);
 
 MPU6050 mpu;
 uint16_t mpuPacketSize;
+unsigned long lastMpuDateTime = 0;
 
 void setup() {
   nodeHandle.initNode();
@@ -64,20 +69,7 @@ void setup() {
   for(int i = 0; i < ESC_NUM; i++)
     esc[i].writeMicroseconds(0);
 
-  // MPUの初期化
-  mpu.initialize();
-  mpu.dmpInitialize();
-
-  // これらのオフセット値はサンプルからそのままコピーしてきたもの
-  // 有効・正確であるかは未検証
-  mpu.setXGyroOffset(270);
-  mpu.setYGyroOffset(76);
-  mpu.setZGyroOffset(-85);
-  mpu.setZAccelOffset(1788);
-
-  mpu.setDMPEnabled(true);
-
-  mpuPacketSize = mpu.dmpGetFIFOPacketSize();
+  initMPU();
 }
 
 void loop() {
@@ -137,11 +129,48 @@ void setMotorVelocity(const aqua_robot_messages::MotorVelocity& motor_velocity) 
   lastMotorCommandTime = millis();
 }
 
+void initMPU() {
+  mpu.initialize();
+  mpu.dmpInitialize();
+
+  // これらのオフセット値はサンプルからそのままコピーしてきたもの
+  // 有効・正確であるかは未検証
+  mpu.setXGyroOffset(270);
+  mpu.setYGyroOffset(76);
+  mpu.setZGyroOffset(-85);
+  mpu.setZAccelOffset(1788);
+
+  mpu.setDMPEnabled(true);
+
+  mpuPacketSize = mpu.dmpGetFIFOPacketSize();
+
+  mpu.resetFIFO(); // FIFOをリセットする必要があるのか検証する必要あり
+
+  lastMpuDateTime = millis();
+}
+
 // MPU6050より各種データを取得、publish用messageにセットする
 bool getMPUData() {
   uint16_t fifoCount = mpu.getFIFOCount();
-  if(fifoCount < mpuPacketSize)
+  /*
+  String message("fifo:");
+  message += fifoCount;
+  message += " size:";
+  message += mpuPacketSize;
+  nodeHandle.loginfo(message.c_str());
+  */
+  if(fifoCount < mpuPacketSize) {
+    unsigned long now = millis();
+    if(now < lastMpuDateTime) // オーバーフロー時
+      lastMpuDateTime = 0;
+
+    if(now - lastMpuDateTime > MPU_RESET_TIME_MILLISECOND) {
+      nodeHandle.loginfo("reset FIFO.");
+      initMPU();
+    }
+
     return false;
+  }
 
   uint8_t fifoBuffer[64];
   mpu.getFIFOBytes(fifoBuffer, mpuPacketSize);
@@ -173,6 +202,8 @@ bool getMPUData() {
   stateMsg.angular_velocity.z = angularVelocity.z / 16.4;
 
   stateMsg.temperature = (mpu.getTemperature()+12412.0)/340.0;
+
+  lastMpuDateTime = millis();
 
   return true;
 }
