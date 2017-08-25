@@ -12,6 +12,8 @@
 static const std::string OPENCV_WINDOW = "Image window";
 ros::Publisher pub;
 
+bool debug_view;
+
 void imageCallback(const sensor_msgs::Image::ConstPtr& msg)
 {
   cv::Mat cv_input;
@@ -24,14 +26,17 @@ void imageCallback(const sensor_msgs::Image::ConstPtr& msg)
     ROS_ERROR("cv_bridge exception: %s", e.what());
     return;
   }
-#ifdef DEBUG_GUI
+  cv::Mat cv_rotate;
+  cv::rotate(cv_input, cv_rotate, cv::ROTATE_180);
+
   cv::Mat cv_out;
-  cv_out = cv_input.clone();
-#endif
+  if(debug_view) {
+    cv_out = cv_rotate.clone();
+  }
 
   cv::Mat cv_blured;
   // ksize, sigma x/y,borderTypeを最適な値にする必要あるかも
-  cv::GaussianBlur(cv_input, cv_blured, cv::Size(3,3),0,0);
+  cv::GaussianBlur(cv_rotate, cv_blured, cv::Size(3,3),0,0);
   cv::Mat cv_gray;
   cv::cvtColor(cv_blured, cv_gray, cv::COLOR_BGR2GRAY);
   cv::Mat cv_canny;
@@ -68,23 +73,23 @@ void imageCallback(const sensor_msgs::Image::ConstPtr& msg)
 
     pub.publish(line);
 
-#ifdef DEBUG_GUI
-    drawContours(cv_out, contours, max_length_contour, cv::Scalar(255,0,0), 5);
-    int image_max_side = std::max(msg->height, msg->width);
-    cv::Point line_start, line_end;
-    line_start.x = fit_line[2] - image_max_side * fit_line[0];
-    line_start.y = fit_line[3] - image_max_side * fit_line[1];
-    line_end.x = fit_line[2] + image_max_side * fit_line[0];
-    line_end.y = fit_line[3] + image_max_side * fit_line[1];
-    cv::clipLine(cv::Size(msg->width, msg->height), line_start, line_end);
-    cv::line(cv_out, line_start, line_end, cv::Scalar(0,255,0), 5);
-#endif
+    if(debug_view) {
+      drawContours(cv_out, contours, max_length_contour, cv::Scalar(255,0,0), 5);
+      int image_max_side = std::max(msg->height, msg->width);
+      cv::Point line_start, line_end;
+      line_start.x = fit_line[2] - image_max_side * fit_line[0];
+      line_start.y = fit_line[3] - image_max_side * fit_line[1];
+      line_end.x = fit_line[2] + image_max_side * fit_line[0];
+      line_end.y = fit_line[3] + image_max_side * fit_line[1];
+      cv::clipLine(cv::Size(msg->width, msg->height), line_start, line_end);
+      cv::line(cv_out, line_start, line_end, cv::Scalar(0,255,0), 5);
+    }
   }
-#ifdef DEBUG_GUI
-  // Update GUI Window
-  cv::imshow(OPENCV_WINDOW, cv_out);
-  cv::waitKey(3);
-#endif
+  if(debug_view) {
+    // Update GUI Window
+    cv::imshow(OPENCV_WINDOW, cv_out);
+    cv::waitKey(3);
+  }
 }
 
 int main(int argc, char **argv)
@@ -95,9 +100,12 @@ int main(int argc, char **argv)
   ros::Subscriber sub = nh.subscribe("image", 1, imageCallback);
   pub = nh.advertise<aqua_robot_line_trace::Line2d>("line", 100);
 
-#ifdef DEBUG_GUI
-  cv::namedWindow(OPENCV_WINDOW);
-#endif
+  if(!(nh.getParam("debug_view", debug_view))) {
+    debug_view = false;
+  }
+
+  if(debug_view)
+    cv::namedWindow(OPENCV_WINDOW);
 
   ros::spin();
 
