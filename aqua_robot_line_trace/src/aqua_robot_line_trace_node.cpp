@@ -59,36 +59,41 @@ void imageCallback(const sensor_msgs::Image::ConstPtr& msg)
     }
   }
 
-  std::cout << "length" << max_length << std::endl;
-  if(max_length_contour != -1 && max_length > std::min(msg->height, msg->width)) {
-    std::vector<double> fit_line;
-    cv::fitLine(contours[max_length_contour], fit_line, cv::DIST_L2, 0, 0.01, 0.01);
-
-    aqua_robot_line_trace::Line2d line;
-    line.vx = fit_line[0];
-    line.vy = fit_line[1];
-    line.px = fit_line[2];
-    line.py = fit_line[3];
-    line.image_height = msg->height;
-    line.image_width = msg->width;
-
-    line_pub.publish(line);
-
+  if(max_length_contour != -1) {
     if(debug_view) {
-      drawContours(cv_out, contours, max_length_contour, cv::Scalar(255,0,0), 5);
-      int image_max_side = std::max(msg->height, msg->width);
-      cv::Point line_start, line_end;
-      line_start.x = fit_line[2] - image_max_side * fit_line[0];
-      line_start.y = fit_line[3] - image_max_side * fit_line[1];
-      line_end.x = fit_line[2] + image_max_side * fit_line[0];
-      line_end.y = fit_line[3] + image_max_side * fit_line[1];
-      cv::clipLine(cv::Size(msg->width, msg->height), line_start, line_end);
-      cv::line(cv_out, line_start, line_end, cv::Scalar(0,255,0), 5);
+      drawContours(cv_out, contours, -1, cv::Scalar(0,0,255), 2);
+    }
+    if(max_length > std::min(msg->height, msg->width)) {
+      std::vector<double> fit_line;
+      cv::fitLine(contours[max_length_contour], fit_line, cv::DIST_L2, 0, 0.01, 0.01);
+
+      aqua_robot_line_trace::Line2d line;
+      line.vx = fit_line[0];
+      line.vy = fit_line[1];
+      line.px = fit_line[2];
+      line.py = fit_line[3];
+      line.image_height = msg->height;
+      line.image_width = msg->width;
+
+      line_pub.publish(line);
+
+      if(debug_view) {
+        drawContours(cv_out, contours, max_length_contour, cv::Scalar(255,0,0), 5);
+        int image_max_side = std::max(msg->height, msg->width);
+        cv::Point line_start, line_end;
+        line_start.x = fit_line[2] - image_max_side * fit_line[0];
+        line_start.y = fit_line[3] - image_max_side * fit_line[1];
+        line_end.x = fit_line[2] + image_max_side * fit_line[0];
+        line_end.y = fit_line[3] + image_max_side * fit_line[1];
+        cv::clipLine(cv::Size(msg->width, msg->height), line_start, line_end);
+        cv::line(cv_out, line_start, line_end, cv::Scalar(0,255,0), 5);
+      }
     }
   }
   if(debug_view) {
     cv_bridge::CvImage cv_bridge_output;
     cv_bridge_output.image = cv_out;
+    cv_bridge_output.encoding = "bgr8";
 
     debug_pub.publish(cv_bridge_output.toImageMsg());
   }
@@ -102,9 +107,9 @@ int main(int argc, char **argv)
   ros::Subscriber sub = nh.subscribe("image", 1, imageCallback);
   line_pub = nh.advertise<aqua_robot_line_trace::Line2d>("line", 100);
 
-  if(!(nh.getParam("debug_view", debug_view))) {
-    debug_view = false;
-  }
+  ros::NodeHandle private_nh("~");
+
+  debug_view = private_nh.param("debug_view", false);
 
   if(debug_view)
     debug_pub = nh.advertise<sensor_msgs::Image>("debug_view", 1);
