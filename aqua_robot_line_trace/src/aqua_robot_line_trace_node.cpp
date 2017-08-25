@@ -10,7 +10,8 @@
 #define DEBUG_GUI // デバッグ用のGUIが不要ならコメントアウト
 
 static const std::string OPENCV_WINDOW = "Image window";
-ros::Publisher pub;
+ros::Publisher line_pub;
+ros::Publisher debug_pub;
 
 bool debug_view;
 
@@ -71,7 +72,7 @@ void imageCallback(const sensor_msgs::Image::ConstPtr& msg)
     line.image_height = msg->height;
     line.image_width = msg->width;
 
-    pub.publish(line);
+    line_pub.publish(line);
 
     if(debug_view) {
       drawContours(cv_out, contours, max_length_contour, cv::Scalar(255,0,0), 5);
@@ -86,9 +87,10 @@ void imageCallback(const sensor_msgs::Image::ConstPtr& msg)
     }
   }
   if(debug_view) {
-    // Update GUI Window
-    cv::imshow(OPENCV_WINDOW, cv_out);
-    cv::waitKey(3);
+    cv_bridge::CvImage cv_bridge_output;
+    cv_bridge_output.image = cv_out;
+
+    debug_pub.publish(cv_bridge_output.toImageMsg());
   }
 }
 
@@ -98,14 +100,14 @@ int main(int argc, char **argv)
   ros::NodeHandle nh;
 
   ros::Subscriber sub = nh.subscribe("image", 1, imageCallback);
-  pub = nh.advertise<aqua_robot_line_trace::Line2d>("line", 100);
+  line_pub = nh.advertise<aqua_robot_line_trace::Line2d>("line", 100);
 
   if(!(nh.getParam("debug_view", debug_view))) {
     debug_view = false;
   }
 
   if(debug_view)
-    cv::namedWindow(OPENCV_WINDOW);
+    debug_pub = nh.advertise<sensor_msgs::Image>("debug_view", 1);
 
   ros::spin();
 
