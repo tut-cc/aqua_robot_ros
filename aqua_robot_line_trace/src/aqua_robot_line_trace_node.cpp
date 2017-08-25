@@ -14,6 +14,9 @@ ros::Publisher line_pub;
 ros::Publisher debug_pub;
 
 bool debug_view;
+double threshold_lower;
+double threshold_upper;
+double contour_length_limit_rate;
 
 void imageCallback(const sensor_msgs::Image::ConstPtr& msg)
 {
@@ -42,7 +45,7 @@ void imageCallback(const sensor_msgs::Image::ConstPtr& msg)
   cv::cvtColor(cv_blured, cv_gray, cv::COLOR_BGR2GRAY);
   cv::Mat cv_canny;
   // thresholdを始めとして、引数を調整する必要あり
-  cv::Canny(cv_gray, cv_canny, 100, 200);
+  cv::Canny(cv_gray, cv_canny, threshold_lower, threshold_upper);
 
   std::vector< std::vector<cv::Point> > contours;
   cv::findContours(cv_canny, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
@@ -60,10 +63,10 @@ void imageCallback(const sensor_msgs::Image::ConstPtr& msg)
   }
 
   if(max_length_contour != -1) {
-    if(debug_view) {
+    if(debug_view)
       drawContours(cv_out, contours, -1, cv::Scalar(0,0,255), 2);
-    }
-    if(max_length > std::min(msg->height, msg->width)) {
+
+    if(max_length > std::min(msg->height, msg->width) * contour_length_limit_rate) {
       std::vector<double> fit_line;
       cv::fitLine(contours[max_length_contour], fit_line, cv::DIST_L2, 0, 0.01, 0.01);
 
@@ -93,7 +96,9 @@ void imageCallback(const sensor_msgs::Image::ConstPtr& msg)
   if(debug_view) {
     cv_bridge::CvImage cv_bridge_output;
     cv_bridge_output.image = cv_out;
+    //cv_bridge_output.image = cv_canny;
     cv_bridge_output.encoding = "bgr8";
+    //cv_bridge_output.encoding = "mono8";
 
     debug_pub.publish(cv_bridge_output.toImageMsg());
   }
@@ -110,6 +115,9 @@ int main(int argc, char **argv)
   ros::NodeHandle private_nh("~");
 
   debug_view = private_nh.param("debug_view", false);
+  threshold_lower = private_nh.param("threshold_lower", 50.0);
+  threshold_upper = private_nh.param("threshold_upper", 35.0);
+  contour_length_limit_rate = private_nh.param("contour_length_limit_rate", 0.8);
 
   if(debug_view)
     debug_pub = nh.advertise<sensor_msgs::Image>("debug_view", 1);
