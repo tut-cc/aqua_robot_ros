@@ -9,31 +9,38 @@ ros::Publisher pub;
 
 void line2dCallBack(const aqua_robot_line_trace::Line2dConstPtr msg)
 {
-  double slope = msg->vy / msg->vx;
-  double intercept = msg->py - slope * msg->px;
-
-  double distance = (msg->image_width / 2.0) - ((msg->image_height / 2.0 - intercept) / slope);
-
   aqua_robot_messages::MotorVelocity order;
-  order.motor_vertical_left = 0;
-  order.motor_vertical_right = 0;
-  // 線がロボットの左にあるとき
-  if(distance >= 0) {
-    if(atan(slope) > PI / 4) {
-      order.motor_horizontal_left = 255;
-      order.motor_horizontal_right = 0;
-    }else{ // ロボットが線に向かっていない場合
-      order.motor_horizontal_left = 0;
-      order.motor_horizontal_right = 255;
-    }
-  // 線がロボットの右にあるとき
-  }else{
-    if(atan(slope) < PI / 4) {
-      order.motor_horizontal_left = 0;
-      order.motor_horizontal_right = 255;
-    }else{ // ロボットが線に向かっていない場合
-      order.motor_horizontal_left = 255;
-      order.motor_horizontal_right = 0;
+  if(msg->vx == 0) {
+    order.motor_horizontal_left = 255;
+    order.motor_horizontal_right = 255;
+    order.motor_vertical_left = 0;
+    order.motor_vertical_right = 0;
+  } else {
+    double slope = msg->vy / msg->vx;
+    double intercept = msg->py - slope * msg->px;
+
+    double distance = (msg->image_width / 2.0) - ((msg->image_height / 2.0 - intercept) / slope);
+
+    order.motor_vertical_left = 0;
+    order.motor_vertical_right = 0;
+    // 線がロボットの左にあるとき
+    if(distance >= 0) {
+      if(atan(slope) > PI / 4) {
+        order.motor_horizontal_left = 255;
+        order.motor_horizontal_right = 0;
+      }else{ // ロボットが線に向かっていない場合
+        order.motor_horizontal_left = 0;
+        order.motor_horizontal_right = 255;
+      }
+      // 線がロボットの右にあるとき
+    }else{
+      if(atan(slope) < PI / 4) {
+        order.motor_horizontal_left = 0;
+        order.motor_horizontal_right = 255;
+      }else{ // ロボットが線に向かっていない場合
+        order.motor_horizontal_left = 255;
+        order.motor_horizontal_right = 0;
+      }
     }
   }
 
