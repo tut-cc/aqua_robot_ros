@@ -7,8 +7,6 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <vector>
 
-#define DEBUG_GUI // デバッグ用のGUIが不要ならコメントアウト
-
 static const std::string OPENCV_WINDOW = "Image window";
 ros::Publisher line_pub;
 ros::Publisher debug_pub;
