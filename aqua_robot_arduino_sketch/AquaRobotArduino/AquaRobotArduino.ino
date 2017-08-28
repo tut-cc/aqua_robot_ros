@@ -63,7 +63,7 @@ void setup() {
     pinMode(ESC_PINS[i], OUTPUT);
     esc[i].attach(ESC_PINS[i]);
   }
-  // setESCMinMax(); // ESCの最大・最小入力値の設定が必要ならコメント解除
+  //setESCMinMax(); // ESCの最大・最小入力値の設定が必要ならコメント解除
   // モータを停止状態に、ESCへの入力が0の場合ブザーが鳴る
   // クライアントからの入力が来なければ、ブザーが鳴り続ける
   for(int i = 0; i < ESC_NUM; i++)
@@ -102,10 +102,11 @@ void setESCMinMax()
   }
 
   // ESCの電源が入るまで待機
-  pinMode(ESC_CHECK_PIN,INPUT);
-  while(digitalRead(ESC_CHECK_PIN) == 0);
+  //pinMode(ESC_CHECK_PIN,INPUT);
+  //while(digitalRead(ESC_CHECK_PIN) == 0);
 
-  delay(2000);
+  // この間にESCに電源をつなぐ
+  delay(15000);
 
   // 最小出力（モータは無回転）に対応するパルス波形を入力 これ以下のパルス波系はすべて無回転として扱われる
   // また、0を入力するとブザー音が鳴る
@@ -113,7 +114,7 @@ void setESCMinMax()
     esc[i].writeMicroseconds(ESC_INPUT_MIN);
   }
 
-  delay(3000);
+  delay(20000);
 }
 
 void setMotorVelocity(const aqua_robot_messages::MotorVelocity& motor_velocity) {
