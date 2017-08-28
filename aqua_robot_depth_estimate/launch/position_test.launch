@@ -1,0 +1,35 @@
+<launch>
+  <arg name="raspberry_pi3_address" default="192.168.1.2"/>
+
+  <machine name="master_pc" address="192.168.1.1" env-loader="$(find aqua_robot_manual_controller)/launch/env-loader/master_pc_set_env.sh" default="true"/>
+  <machine name="raspberry_pi3" address="$(arg raspberry_pi3_address)" env-loader="/home/tut/ros_remote_env_loader.sh" default="never" user="tut"/>
+
+  <group ns="aqua_robot">
+    <node name="arduino" machine="raspberry_pi3" pkg="rosserial_python" type="serial_node.py" args="/dev/ttyACM0" required="true"/>
+    <node name="raspi_camera" machine="raspberry_pi3" pkg="raspicam_node" type="raspicam_node" required="true">
+      <param name="camera_info_url" value="package://raspicam_node/camera_info/camerav2_1280x960.yaml"/>
+      <param name="width" value="1280"/>
+      <param name="height" value="960"/>
+      <param name="framerate" value="30"/>
+      <param name="camera_frame_id" value="raspicam"/>
+    </node>
+    <node name="usb_camera" machine="raspberry_pi3" pkg="usb_cam" type="usb_cam_node">
+      <param name="video_device" value="/dev/video1"/>
+    </node>
+  </group>
+
+  <group ns="aqua_robot_controller">
+    <node name="xbox_gamepad" pkg="joy" type="joy_node" required="true">
+      <param name="deadzone" value="0.2"/>
+      <param name="dev" value="/dev/input/js1"/> <!-- dm1-3000には、標準でjs0というデバイスが存在する -->
+    </node>
+    <node name="manual_controller" pkg="aqua_robot_manual_controller" type="manual_controller" required="true">
+      <remap from="set_motor_velocity" to="/aqua_robot/set_motor_velocity"/>
+    </node>
+    <node name="depth_estimate" pkg="aqua_robot_depth_estimate" type="aqua_robot_depth_estimate_node">
+      <remap from="state" to="/aqua_robot/status"/>
+    </node>
+  </group>
+
+  <node name="rqt" pkg="rqt_gui" type="rqt_gui" args="--perspective-file $(find aqua_robot_manual_controller)/rqt/manual_controller.perspective" required="true"/>
+</launch>
