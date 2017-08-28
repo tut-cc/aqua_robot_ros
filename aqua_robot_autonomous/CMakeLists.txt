@@ -10,6 +10,7 @@ project(aqua_robot_autonomous)
 find_package(catkin REQUIRED COMPONENTS
   aqua_robot_line_trace
   aqua_robot_messages
+  aqua_robot_front_camera_imageproc
   roscpp
 )
 
@@ -105,7 +106,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES aqua_robot_autonomous
-  CATKIN_DEPENDS aqua_robot_line_trace aqua_robot_messages roscpp
+  CATKIN_DEPENDS aqua_robot_line_trace aqua_robot_messages roscpp aqua_robot_front_camera_imageproc
 #  DEPENDS system_lib
 )
 

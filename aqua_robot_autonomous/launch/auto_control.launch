@@ -1,18 +1,26 @@
 <launch>
   <node name="arduino" pkg="rosserial_python" type="serial_node.py" args="/dev/ttyACM0" required="true"/>
-  <node name="raspi_camera" pkg="raspicam_raw_node" type="raspicam_node" required="true">
-    <param name="camera_info_url" value="package://raspicam_node/camera_info/camerav2_1280x960.yaml"/>
-    <param name="width" value="1280"/>
-    <param name="height" value="960"/>
-    <param name="framerate" value="10"/>
-    <param name="camera_frame_id" value="raspicam"/>
+  <!--
+  <group ns="front">
+    <node name="usb_camera" pkg="usb_cam" type="usb_cam_node">
+      <param name="video_device" value="/dev/video1"/>
+      <param name="framerate" value="10"/>
+    </node>
+  </group>
+  -->
+  <group ns="under">
+    <node name="usb_camera" pkg="usb_cam" type="usb_cam_node">
+      <param name="video_device" value="/dev/video0"/>
+      <param name="framerate" value="10"/>
+    </node>
+  </group>
+  <!--
+  <node name="front_imageproc" pkg="aqua_robot_front_camera_imageproc" type="aqua_robot_front_camera_imageproc_node">
+    <remap from="image" to="front/usb_camera/image_raw"/>
   </node>
-  <node name="usb_camera" pkg="usb_cam" type="usb_cam_node">
-    <param name="video_device" value="/dev/video1"/>
-    <param name="framerate" value="10"/>
-  </node>
+  -->
   <node name="line_trace" pkg="aqua_robot_line_trace" type="aqua_robot_line_trace_node">
-    <remap from="image" to="usb_cam/image_raw"/>
+    <remap from="image" to="under/usb_camera/image_raw"/>
   </node>
   <node name="auto_control" pkg="aqua_robot_autonomous" type="aqua_robot_autonomous_node">
     <remap from="motor_velocity" to="set_motor_velocity"/>
